@@ -27,12 +27,12 @@ jobs:
   # Call spread and unit tests as reusable workflows. This is the most
   # dependable method by which to share the artifacts
   spread:
-    uses: ./.github/workflows/spread.yaml
+    uses: $/.github/workflows/spread.yaml
     secrets:
       STORE_CREDENTIALS: ${{ secrets.STORE_CREDENTIALS }}
       SDKCRAFT_STORE_CREDENTIALS: ${{ secrets.SDKCRAFT_STORE_CREDENTIALS_PROD }}
   unit-tests:
-    uses: ./.github/workflows/unit-tests.yaml
+    uses: $/.github/workflows/unit-tests.yaml
 
   code-coverage:
     needs: [spread, unit-tests]
