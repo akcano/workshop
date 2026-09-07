@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   build-deps:
-    uses: ./.github/workflows/build-deps.yaml
+    uses: $/.github/workflows/build-deps.yaml
     secrets:
       SDKCRAFT_STORE_CREDENTIALS: ${{ secrets.SDKCRAFT_STORE_CREDENTIALS }}
   snap-tests:

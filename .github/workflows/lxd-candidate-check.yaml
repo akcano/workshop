@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   spread:
-    uses: ./.github/workflows/spread.yaml
+    uses: $/.github/workflows/spread.yaml
     with:
       lxd_channel: 6/candidate
     secrets:
