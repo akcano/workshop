@@ -392,8 +392,7 @@ func (s *Backend) TakeSnapshot(ctx context.Context, name string, snapshot worksh
 		// that case first before cleaning up.
 		if reverr := s.checkPartialSnapshot(snapshotConn, snapshot, snapshotName); reverr != nil {
 			logger.Noticef("On TakeSnapshot: %v", reverr)
-		}
-		if reverr := s.deleteSnapshot(snapshotConn, snapshotName); reverr != nil {
+		} else if reverr := s.deleteSnapshot(snapshotConn, snapshotName); reverr != nil {
 			logger.Noticef("On TakeSnapshot: %v", reverr)
 		}
 	})
