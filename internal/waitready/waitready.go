@@ -90,7 +90,12 @@ func waitReady(ctx context.Context) error {
 		return err
 	}
 
-	ready, err := isReady(conn)
+	manager := conn.Object("org.freedesktop.systemd1", "/org/freedesktop/systemd1")
+	if err := manager.CallWithContext(ctx, "org.freedesktop.systemd1.Manager.Subscribe", 0).Err; err != nil {
+		return err
+	}
+
+	ready, err := isReady(manager)
 	if err != nil {
 		return err
 	}
@@ -119,8 +124,7 @@ func waitReady(ctx context.Context) error {
 	}
 }
 
-func isReady(conn *dbus.Conn) (bool, error) {
-	manager := conn.Object("org.freedesktop.systemd1", "/org/freedesktop/systemd1")
+func isReady(manager dbus.BusObject) (bool, error) {
 	variant, err := manager.GetProperty("org.freedesktop.systemd1.Manager.SystemState")
 	if err != nil {
 		return false, err
