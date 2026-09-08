@@ -78,6 +78,15 @@ Install |ws_markup|, follow the four-part tutorial, and study working examples.
      - :ref:`Install Workshop <tut_install>` •
        :ref:`Initialize a project <ref_workshop_init>`
 
+   * - **Concepts**
+     - :ref:`Workshops <exp_workshop_concepts>` •
+       :ref:`Projects <exp_projects>` •
+       :ref:`SDKs <exp_sdk_concepts>` •
+       :ref:`Interfaces <exp_interface_concepts>` •
+       :ref:`Changes, tasks <exp_changes_tasks>` •
+       :ref:`Actions <exp_workshop_definition_actions>` •
+       :ref:`CLI tools <exp_cli>`
+
    * - **Tutorial**
      - :ref:`Get started <tut_get_started>` •
        :ref:`Work with interfaces <tut_interfaces>` •
@@ -99,8 +108,7 @@ the interfaces that connect them, and the machinery underneath.
    :class: borderless
 
    * - **Workshops**
-     - :ref:`Concepts <exp_workshop_concepts>` •
-       :ref:`Status <exp_workshop_status>` •
+     - :ref:`Status <exp_workshop_status>` •
        :ref:`Launch, refresh, restore <exp_workshop_lifecycle>` •
        :ref:`Base image <exp_base>` •
        :ref:`Definition file <ref_workshop_definition>` •
@@ -108,13 +116,11 @@ the interfaces that connect them, and the machinery underneath.
        :ref:`Internals <ref_workshop_internals>`
 
    * - **Projects**
-     - :ref:`Concepts <exp_projects>` •
-       :ref:`Multi-workshop patterns <exp_multi_workshop_patterns>` •
+     - :ref:`Multi-workshop patterns <exp_multi_workshop_patterns>` •
        :ref:`Project updates <tut_project_updates>`
 
    * - **SDKs**
-     - :ref:`Concepts <exp_sdk_concepts>` •
-       :ref:`Definition <exp_sdk_definition>` •
+     - :ref:`Definition <exp_sdk_definition>` •
        :ref:`Parts <exp_sdk_parts>` •
        :ref:`Runtime hooks <exp_sdk_hooks>` •
        :ref:`Lifecycle <exp_sdk_lifecycle>` •
@@ -130,8 +136,7 @@ the interfaces that connect them, and the machinery underneath.
        :ref:`Channels <ref_sdk_channels>`
 
    * - **Interfaces**
-     - :ref:`Concepts <exp_interface_concepts>` •
-       :ref:`Plugs and slots <exp_plugs_slots>` •
+     - :ref:`Plugs and slots <exp_plugs_slots>` •
        :ref:`Auto-connection <exp_interface_auto_connection>` •
        :ref:`Connections <exp_interface_connections>` •
        :ref:`Plug bindings <exp_plug_bindings>` •
@@ -139,12 +144,10 @@ the interfaces that connect them, and the machinery underneath.
        :ref:`Connections across refresh and restore <exp_workshop_connection_lifecycle>`
 
    * - **Changes, tasks**
-     - :ref:`Concepts <exp_changes_tasks>` •
-       :ref:`Track changes and tasks <tut_changes_tasks>`
+     - :ref:`Track changes and tasks <tut_changes_tasks>`
 
    * - **CLI tools**
-     - :ref:`Overview <exp_cli>` •
-       :ref:`workshop <ref_workshop__cli>` •
+     - :ref:`workshop <ref_workshop__cli>` •
        :ref:`sdk <ref_sdk__cli>` •
        :ref:`sdkcraft <ref_sdkcraft__cli>` •
        :ref:`workshopctl <ref_workshopctl__cli>` •
@@ -183,9 +186,8 @@ Run, tailor, and wire workshops as you develop.
        :ref:`Info <ref_workshop_info>`
 
    * - **Commands, actions**
-     - :ref:`Execute commands <ref_workshop_exec>` •
+     - :ref:`Run commands <ref_workshop_exec>` •
        :ref:`Interactive shell <ref_workshop_shell>` •
-       :ref:`Actions explained <exp_workshop_definition_actions>` •
        :ref:`Add actions <how_add_actions>` •
        :ref:`Run actions <ref_workshop_run>` •
        :ref:`List actions <ref_workshop_actions>` •
