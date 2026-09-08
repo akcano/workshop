@@ -1,5 +1,5 @@
 :slug: home-page
-:relatedlinks: [Workshop on GitHub](https://github.com/canonical/workshop/), [SDKcraft on GitHub](https://github.com/canonical/sdkcraft/), [Reference workshops on GitHub](https://github.com/canonical/reference-workshops), [Reference SDKs on GitHub](https://github.com/canonical/reference-sdks), [LXD documentation](https://canonical.com/lxd/docs/default/), [Snap documentation](https://snapcraft.io/docs/)
+:relatedlinks: [Workshop repo](https://github.com/canonical/workshop/), [SDKcraft repo](https://github.com/canonical/sdkcraft/), [Reference workshops](https://github.com/canonical/reference-workshops), [Reference SDKs](https://github.com/canonical/reference-sdks), [LXD docs](https://canonical.com/lxd/docs/default/), [Snap docs](https://snapcraft.io/docs/)
 
 .. _home:
 
