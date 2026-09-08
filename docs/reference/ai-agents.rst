@@ -3,8 +3,8 @@
 .. meta::
    :description: Reference for Workshop's AI-agent integration points,
                  listing the LLM-readable documentation URLs, the Context7
-                 integration, and the use-workshop and design-sdk
-                 agentic skills.
+                 integration, and the use-workshop, onboard-workshop,
+                 and design-sdk agentic skills.
 
 Workshop and AI agents
 ======================
@@ -75,6 +75,43 @@ using the skills path for your agent
 Mention |ws_markup| in any prompt to trigger the skill.
 
 
+.. _ref_ai_onboard_workshop_skill:
+
+The onboard-workshop skill
+--------------------------
+
+The same repository ships :samp:`onboard-workshop`,
+an agentic skill for repositories that have no workshop definition yet.
+The skill analyzes how the repository already builds, tests, and runs,
+delivers a feasibility verdict before writing any file,
+and proposes a definition that wraps the existing entry points
+(Makefiles, scripts, CI commands) as actions.
+Once approved,
+it writes :file:`.workshop/<NAME>.yaml` and any in-project SDKs,
+launches the workshop,
+and proves each action inside it.
+The repository's own build files stay untouched.
+
+The skill installs together with :samp:`use-workshop`
+and reads its sibling's references;
+when copying the skill directories instead,
+copy :file:`.github/skills/onboard-workshop/`
+alongside :file:`.github/skills/use-workshop/`.
+
+#. Aim the agent at the repository.
+
+#. Run :samp:`/onboard-workshop onboard <REPO-PATH>` and answer the prompts.
+   Run :samp:`/onboard-workshop analyze` instead
+   to stop at the feasibility verdict and proposal
+   without creating anything.
+
+#. Acknowledge the verdict and approve the proposal,
+   then review the generated files.
+
+To operate the resulting workshop, use :samp:`use-workshop`;
+to package the repository's software as a Store SDK, use :samp:`design-sdk`.
+
+
 .. _ref_ai_design_sdk_skill:
 
 The design-sdk skill
@@ -101,7 +138,7 @@ with version branches, CI workflows, and a :file:`renovate.json`,
 and publishes the SDK to the SDK Store.
 
 The skill installs together with :samp:`use-workshop`:
-the plugin carries both,
+the plugin carries all three skills,
 and when copying the skill directories instead,
 copy :file:`.github/skills/design-sdk/`
 alongside :file:`.github/skills/use-workshop/`,
