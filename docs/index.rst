@@ -211,7 +211,7 @@ Run, tailor, and wire workshops as you develop.
        :ref:`Connection entry <ref_workshop_definition_connection_entry>` •
        :ref:`Interface syntax <ref_workshop_definition_interfaces>`
 
-   * - **Projects and multiple workshops**
+   * - **Multiple workshops and projects**
      - :ref:`Move projects <how_move_projects>` •
        :ref:`Use multiple workshops <how_use_multiple_workshops>`
 
@@ -362,7 +362,7 @@ and take part in the project.
    :widths: 20 80
    :class: borderless
 
-   * - **Releases and upgrades**
+   * - **Releases, upgrades**
      - :ref:`Release notes <release_notes>` •
        :ref:`Release policy and LTS <release_policy>` •
        :ref:`Upgrade <release_upgrade>` •
