@@ -78,6 +78,12 @@ Install |ws_markup|, follow the four-part tutorial, and study working examples.
      - :ref:`Install Workshop <tut_install>` •
        :ref:`Initialize a project <ref_workshop_init>`
 
+   * - **Tutorial**
+     - :ref:`Get started <tut_get_started>` •
+       :ref:`Work with interfaces <tut_interfaces>` •
+       :ref:`Sketch SDKs <tut_sketch_sdks>` •
+       :ref:`Craft SDKs <tut_craft_sdks>`
+
    * - **Concepts**
      - :ref:`Workshops <exp_workshop_concepts>` •
        :ref:`Projects <exp_projects>` •
@@ -86,12 +92,6 @@ Install |ws_markup|, follow the four-part tutorial, and study working examples.
        :ref:`Changes, tasks <exp_changes_tasks>` •
        :ref:`Actions <exp_workshop_definition_actions>` •
        :ref:`CLI tools <exp_cli>`
-
-   * - **Tutorial**
-     - :ref:`Get started <tut_get_started>` •
-       :ref:`Work with interfaces <tut_interfaces>` •
-       :ref:`Sketch SDKs <tut_sketch_sdks>` •
-       :ref:`Craft SDKs <tut_craft_sdks>`
 
    * - **Examples**
      - `Reference workshops <https://github.com/canonical/reference-workshops>`__ •
@@ -110,8 +110,8 @@ the interfaces that connect them, and the machinery underneath.
    * - **Workshops**
      - :ref:`Status <exp_workshop_status>` •
        :ref:`Launch, refresh, restore <exp_workshop_lifecycle>` •
-       :ref:`Base image <exp_base>` •
-       :ref:`Definition file <ref_workshop_definition>` •
+       :ref:`Base <exp_base>` •
+       :ref:`Definition <ref_workshop_definition>` •
        :ref:`Status diagrams <ref_workshop_status>` •
        :ref:`Internals <ref_workshop_internals>`
 
@@ -124,14 +124,14 @@ the interfaces that connect them, and the machinery underneath.
        :ref:`Parts <exp_sdk_parts>` •
        :ref:`Runtime hooks <exp_sdk_hooks>` •
        :ref:`Lifecycle <exp_sdk_lifecycle>` •
-       :ref:`Definition file <ref_sdk_definition>` •
+       :ref:`Definition <ref_sdk_definition>` •
        :ref:`Internals <ref_sdk_internals>`
 
    * - **SDK origins**
      - :ref:`System SDK <exp_system_sdk>` •
        :ref:`SDK Store <exp_sdk_store>` •
        :ref:`In-project SDKs <exp_in_project_sdk>` •
-       :ref:`Sketch SDKs <exp_sketch_sdk>` •
+       :ref:`Sketching <exp_sketch_sdk>` •
        :ref:`Test and try SDKs <exp_test_try_sdk>` •
        :ref:`Channels <ref_sdk_channels>`
 
@@ -191,7 +191,7 @@ Run, tailor, and wire workshops as you develop.
        :ref:`Add actions <how_add_actions>` •
        :ref:`Run actions <ref_workshop_run>` •
        :ref:`List actions <ref_workshop_actions>` •
-       :ref:`Action entry <ref_workshop_definition_action_entry>`
+       :ref:`Action syntax <ref_workshop_definition_action_entry>`
 
    * - **Tailor with SDKs**
      - :ref:`Add SDKs <exp_workshop_definition_sdks>` •
@@ -200,7 +200,7 @@ Run, tailor, and wire workshops as you develop.
        :ref:`List installed SDKs <ref_sdk_list>` •
        :ref:`Sketch an SDK <ref_workshop_sketch-sdk>` •
        :ref:`Manage sketches <ref_workshop_sketches>` •
-       :ref:`SDK entry <ref_workshop_definition_sdk_entry>`
+       :ref:`SDK syntax <ref_workshop_definition_sdk_entry>`
 
    * - **Connect interfaces**
      - :ref:`Plugs, slots, connections <exp_workshop_definition_connections>` •
