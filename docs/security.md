@@ -3,6 +3,7 @@
 This is an overview of security considerations for Workshop and SDKcraft.
 
 (security_privileges)=
+
 ## Privileges
 
 Workshop has a client-server architecture; its CLI, which is the contact surface
@@ -21,6 +22,7 @@ to work and securely confines the SDK build process to a container.
 Packaged SDKs are uploaded to the SDK Store.
 
 (security_isolation)=
+
 ## Isolation
 
 Users can only access the workshops they have created; these workshops have
@@ -56,6 +58,7 @@ manager](https://snapcraft.io/docs/interface-management/):
   attack surface.
 
 (security_risks)=
+
 ## Risks
 
 Although safeguards are in place, the security of a workshop or an SDK largely
@@ -79,6 +82,7 @@ Use the latest releases of Workshop and SDKcraft from GitHub; older releases may
 have known bugs or be incompatible with latest changes.
 
 (security_reporting)=
+
 ## Reporting a vulnerability
 
 The easiest way to report a security issue is through GitHub, filing a private
