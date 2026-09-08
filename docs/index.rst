@@ -109,8 +109,8 @@ the interfaces that connect them, and the machinery underneath.
 
    * - **Projects**
      - :ref:`Concepts <exp_projects>` •
-       :ref:`Project updates <tut_project_updates>` •
-       :ref:`Multi-workshop patterns <exp_multi_workshop_patterns>`
+       :ref:`Multi-workshop patterns <exp_multi_workshop_patterns>` •
+       :ref:`Project updates <tut_project_updates>`
 
    * - **SDKs**
      - :ref:`Concepts <exp_sdk_concepts>` •
@@ -152,6 +152,7 @@ the interfaces that connect them, and the machinery underneath.
 
    * - **Architecture**
      - :ref:`System components <exp_arch_system_components>` •
+       :ref:`Runtime behavior <exp_arch_runtime_behavior>` •
        :ref:`Daemon <exp_arch_daemon>` •
        :ref:`REST API <exp_arch_api>` •
        :ref:`LXD backend <exp_arch_lxd_backend>` •
@@ -159,7 +160,6 @@ the interfaces that connect them, and the machinery underneath.
        :ref:`State database <exp_arch_state_database>` •
        :ref:`Images <exp_arch_images>` •
        :ref:`Network <exp_arch_network>` •
-       :ref:`Runtime behavior <exp_arch_runtime_behavior>` •
        :ref:`Launch process <exp_arch_workshop_launch>` •
        :ref:`Container layout <exp_arch_container_layout>`
 
@@ -193,27 +193,27 @@ Run, tailor, and wire workshops as you develop.
 
    * - **Tailor with SDKs**
      - :ref:`Add SDKs <exp_workshop_definition_sdks>` •
-       :ref:`SDK entry <ref_workshop_definition_sdk_entry>` •
        :ref:`Find SDKs <ref_sdk_find>` •
        :ref:`Inspect an SDK <ref_sdk_info>` •
        :ref:`List installed SDKs <ref_sdk_list>` •
        :ref:`Sketch an SDK <ref_workshop_sketch-sdk>` •
-       :ref:`Manage sketches <ref_workshop_sketches>`
+       :ref:`Manage sketches <ref_workshop_sketches>` •
+       :ref:`SDK entry <ref_workshop_definition_sdk_entry>`
 
    * - **Connect interfaces**
      - :ref:`Plugs, slots, connections <exp_workshop_definition_connections>` •
+       :ref:`CLI operations <exp_interfaces_cli_operations>` •
        :ref:`Connect <ref_workshop_connect>` •
        :ref:`Disconnect <ref_workshop_disconnect>` •
        :ref:`List connections <ref_workshop_connections>` •
        :ref:`Remount <ref_workshop_remount>` •
-       :ref:`CLI operations <exp_interfaces_cli_operations>` •
        :ref:`Plug or slot entry <ref_workshop_definition_plug_slot>` •
        :ref:`Connection entry <ref_workshop_definition_connection_entry>` •
        :ref:`Interface syntax <ref_workshop_definition_interfaces>`
 
    * - **Multiple workshops and projects**
-     - :ref:`Move projects <how_move_projects>` •
-       :ref:`Use multiple workshops <how_use_multiple_workshops>`
+     - :ref:`Use multiple workshops <how_use_multiple_workshops>` •
+       :ref:`Move projects <how_move_projects>`
 
 
 .. rubric:: Craft and publish SDKs
@@ -317,8 +317,8 @@ credentials, editors, toolchains, CI, and AI agents.
    * - **Networking**
      - :ref:`Tunnel interface <exp_tunnel_interface>` •
        :ref:`Tunnel connection <exp_tunnel_connection>` •
-       :ref:`Forward ports <how_forward_ports>` •
        :ref:`Workshop hostnames <exp_workshop_hostname>` •
+       :ref:`Forward ports <how_forward_ports>` •
        :ref:`Cross-workshop networking <how_use_multiple_workshops_networking>` •
        :ref:`Tunnel reference <ref_tunnel_interface>`
 
@@ -344,13 +344,13 @@ credentials, editors, toolchains, CI, and AI agents.
        :ref:`Cache SDK data across runs <how_run_workshops_in_github_actions_cache>`
 
    * - **AI agents**
-     - :ref:`Use with AI agents <how_use_workshops_with_ai_agents>` •
-       :ref:`Integration points <ref_ai_agents>` •
-       :ref:`LLM-readable docs <ref_ai_discovery>` •
-       :ref:`Context7 <ref_ai_context7>` •
+     - :ref:`Integration points <ref_ai_agents>` •
+       :ref:`Use with AI agents <how_use_workshops_with_ai_agents>` •
        :ref:`use-workshop skill <ref_ai_use_workshop_skill>` •
        :ref:`onboard-workshop skill <ref_ai_onboard_workshop_skill>` •
-       :ref:`design-sdk skill <ref_ai_design_sdk_skill>`
+       :ref:`design-sdk skill <ref_ai_design_sdk_skill>` •
+       :ref:`LLM-readable docs <ref_ai_discovery>` •
+       :ref:`Context7 <ref_ai_context7>`
 
 
 .. rubric:: Maintain, secure, contribute
@@ -415,9 +415,9 @@ Worked scenarios that combine the pieces above.
    :class: borderless
 
    * - **Agentic engineering**
-     - :ref:`Parallel agent runs <how_ai_agents_parallel_runs>` •
+     - :ref:`Use with AI agents <how_use_workshops_with_ai_agents>` •
+       :ref:`Parallel agent runs <how_ai_agents_parallel_runs>` •
        :ref:`Role-based coding <how_ai_agents_role_based>` •
-       :ref:`Use with AI agents <how_use_workshops_with_ai_agents>` •
        :ref:`use-workshop skill <ref_ai_use_workshop_skill>` •
        :ref:`onboard-workshop skill <ref_ai_onboard_workshop_skill>` •
        :ref:`design-sdk skill <ref_ai_design_sdk_skill>`
