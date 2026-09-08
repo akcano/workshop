@@ -138,11 +138,11 @@ the interfaces that connect them, and the machinery underneath.
        :ref:`Validation <exp_interfaces_validation>` •
        :ref:`Connections across refresh and restore <exp_workshop_connection_lifecycle>`
 
-   * - **Changes and tasks**
+   * - **Changes, tasks**
      - :ref:`Concepts <exp_changes_tasks>` •
        :ref:`Track changes and tasks <tut_changes_tasks>`
 
-   * - **Command-line tools**
+   * - **CLI tools**
      - :ref:`Overview <exp_cli>` •
        :ref:`workshop <ref_workshop__cli>` •
        :ref:`sdk <ref_sdk__cli>` •
@@ -182,13 +182,13 @@ Run, tailor, and wire workshops as you develop.
        :ref:`List <ref_workshop_list>` •
        :ref:`Info <ref_workshop_info>`
 
-   * - **Commands and actions**
+   * - **Commands, actions**
      - :ref:`Execute commands <ref_workshop_exec>` •
        :ref:`Interactive shell <ref_workshop_shell>` •
+       :ref:`Actions explained <exp_workshop_definition_actions>` •
        :ref:`Add actions <how_add_actions>` •
        :ref:`Run actions <ref_workshop_run>` •
        :ref:`List actions <ref_workshop_actions>` •
-       :ref:`Actions explained <exp_workshop_definition_actions>` •
        :ref:`Action entry <ref_workshop_definition_action_entry>`
 
    * - **Tailor with SDKs**
