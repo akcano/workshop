@@ -49,54 +49,81 @@ and serves it to AI agents through its Model Context Protocol (MCP) server,
 so agents can pull current docs without scraping the site.
 
 
-.. _ref_ai_use_workshop_skill:
+.. _ref_ai_skills:
 
-The use-workshop skill
-----------------------
+Agentic skills
+--------------
 
 The `use-workshop-skill <https://github.com/canonical/use-workshop-skill>`_ repository
-ships an agentic skill for operating the |ws_markup| CLI:
-launching workshops,
-refreshing them,
-running commands inside,
-wiring interfaces,
-debugging failed changes,
-and orchestrating parallel environments via Git worktrees.
+ships three agentic skills,
+one for each stage of working with |ws_markup|:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 3 8 6
+
+   * - Skill
+     - Use it when
+     - Start with
+   * - :ref:`use-workshop <ref_ai_use_workshop_skill>`
+     - A workshop definition exists
+       and you want the agent to operate it.
+     - Mention |ws_markup| in a prompt.
+   * - :ref:`onboard-workshop <ref_ai_onboard_workshop_skill>`
+     - A repository has no workshop definition yet
+       and you want one derived from its toolchain.
+     - :samp:`/onboard-workshop onboard <REPO-PATH>`
+   * - :ref:`design-sdk <ref_ai_design_sdk_skill>`
+     - You publish software as an SDK
+       and want the agent to design, build, and release it.
+     - :samp:`/design-sdk new <SOFTWARE>`
 
 If your agent supports plugins,
 install the repository as a plugin:
 run :samp:`/plugin marketplace add canonical/use-workshop-skill`,
 then :samp:`/plugin install use-workshop@canonical`.
+The plugin carries all three skills.
+
 Otherwise,
-copy :file:`.github/skills/use-workshop/` into the target repo,
+copy the skill directories from :file:`.github/skills/` into the target repo,
 using the skills path for your agent
 (:file:`.claude/skills/` for Claude Code,
 :file:`.github/skills/` for Copilot, and so on).
-Mention |ws_markup| in any prompt to trigger the skill.
+Always copy :file:`use-workshop/` along with the skill you need,
+as the other two read its references.
+
+
+.. _ref_ai_use_workshop_skill:
+
+use-workshop
+~~~~~~~~~~~~
+
+Operates the |ws_markup| CLI on an existing definition:
+launching and refreshing workshops,
+running commands inside,
+wiring interfaces,
+debugging failed changes,
+and orchestrating parallel environments via Git worktrees.
+The skill triggers whenever a prompt mentions |ws_markup|
+and follows every mutating command with the usual verification:
+:command:`workshop changes`, :command:`workshop tasks`, :command:`workshop info`.
 
 
 .. _ref_ai_onboard_workshop_skill:
 
-The onboard-workshop skill
---------------------------
+onboard-workshop
+~~~~~~~~~~~~~~~~
 
-The same repository ships :samp:`onboard-workshop`,
-an agentic skill for repositories that have no workshop definition yet.
-The skill analyzes how the repository already builds, tests, and runs,
+Bootstraps a definition for a repository that has none.
+The skill reads how the repository already builds, tests, and runs,
 delivers a feasibility verdict before writing any file,
 and proposes a definition that wraps the existing entry points
-(Makefiles, scripts, CI commands) as actions.
+(make targets, scripts, CI commands) as actions.
 Once approved,
 it writes :file:`.workshop/<NAME>.yaml` and any in-project SDKs,
 launches the workshop,
 and proves each action inside it.
 The repository's own build files stay untouched.
-
-The skill installs together with :samp:`use-workshop`
-and reads its sibling's references;
-when copying the skill directories instead,
-copy :file:`.github/skills/onboard-workshop/`
-alongside :file:`.github/skills/use-workshop/`.
 
 #. Aim the agent at the repository.
 
@@ -108,17 +135,13 @@ alongside :file:`.github/skills/use-workshop/`.
 #. Acknowledge the verdict and approve the proposal,
    then review the generated files.
 
-To operate the resulting workshop, use :samp:`use-workshop`;
-to package the repository's software as a Store SDK, use :samp:`design-sdk`.
-
 
 .. _ref_ai_design_sdk_skill:
 
-The design-sdk skill
---------------------
+design-sdk
+~~~~~~~~~~
 
-The same repository ships :samp:`design-sdk`,
-an agentic skill for the publisher side:
+Covers the publisher side:
 designing, building, and publishing SDKs with |sdk_markup|.
 The skill runs an interactive design conversation:
 it asks about the software to package,
@@ -129,20 +152,13 @@ and which bases and architectures to build for,
 then proposes a design for approval.
 Once approved,
 it writes :file:`sdkcraft.yaml`, the hooks, and spread tests,
-iterates with :command:`sdkcraft try` and :command:`workshop refresh`
+iterates with :command:`sdkcraft try` and :command:`workshop refresh`
 until the SDK comes up healthy,
 and writes the README.
 On request,
 it also onboards the SDK repository
 with version branches, CI workflows, and a :file:`renovate.json`,
-and publishes the SDK to the SDK Store.
-
-The skill installs together with :samp:`use-workshop`:
-the plugin carries all three skills,
-and when copying the skill directories instead,
-copy :file:`.github/skills/design-sdk/`
-alongside :file:`.github/skills/use-workshop/`,
-as :samp:`design-sdk` reads its sibling's references.
+and publishes the SDK to the SDK Store.
 
 #. Aim the agent at the new repository.
 
