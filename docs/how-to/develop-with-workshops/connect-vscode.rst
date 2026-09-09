@@ -325,45 +325,6 @@ If the view ever looks out of date,
 run :guilabel:`Workshop: Refresh Workshops` from the Command Palette
 to re-read the workshop list from the daemon.
 
-Every action in the view drives the same :program:`workshopd` daemon
-as the :program:`workshop` command,
-so the workshop's state is always visible from a terminal as well:
-
-.. list-table::
-   :header-rows: 1
-   :widths: 30 70
-
-   * - Action
-     - Command-line equivalent
-
-   * - :guilabel:`Add New Workshop`
-     - :command:`workshop init`, run by the wizard itself;
-       the exact command line appears in the :guilabel:`Workshop` output channel
-
-   * - :guilabel:`Reopen in Workshop`
-     - :command:`workshop launch` for a workshop that was never launched,
-       :command:`workshop start` for a stopped one,
-       then an SSH connection to the workshop's hostname
-
-   * - :guilabel:`Refresh and Reopen`
-     - :command:`workshop refresh --wait-on-error`,
-       then the SSH connection again
-
-   * - :guilabel:`Continue Refresh`, :guilabel:`Abort Refresh`
-     - :command:`workshop refresh --continue`
-       or :command:`workshop refresh --abort`
-
-   * - :guilabel:`Turn Off…`
-     - :command:`workshop remove`
-
-   * - The expanded row
-     - :command:`workshop info`
-
-   * - :guilabel:`Reopen Locally`, :guilabel:`Open Definition File`
-     - No equivalent; these only act on the VS Code window
-
-
-
 
 .. _how_vscode_refresh:
 
@@ -539,6 +500,49 @@ so the next :guilabel:`Reopen in Workshop` launches the workshop afresh.
    Find the workshop's hostname with :command:`workshop info dev`
    and use it with Remote - SSH's own
    :guilabel:`Remote-SSH: Connect to Host…` command.
+
+
+.. _how_vscode_commands:
+
+Match actions to commands
+-------------------------
+
+Every action in the Workshops view drives the same :program:`workshopd` daemon
+as the :program:`workshop` command,
+so the workshop's state is always visible from a terminal as well:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Action
+     - Command-line equivalent
+
+   * - :guilabel:`Add New Workshop`
+     - :command:`workshop init`, run by the wizard itself;
+       the exact command line appears in the :guilabel:`Workshop` output channel
+
+   * - :guilabel:`Reopen in Workshop`
+     - :command:`workshop launch` for a workshop that was never launched,
+       :command:`workshop start` for a stopped one,
+       then an SSH connection to the workshop's hostname
+
+   * - :guilabel:`Refresh and Reopen`
+     - :command:`workshop refresh --wait-on-error`,
+       then the SSH connection again
+
+   * - :guilabel:`Continue Refresh`, :guilabel:`Abort Refresh`
+     - :command:`workshop refresh --continue`
+       or :command:`workshop refresh --abort`
+
+   * - :guilabel:`Turn Off…`
+     - :command:`workshop remove`
+
+   * - The expanded row
+     - :command:`workshop info`
+
+   * - :guilabel:`Reopen Locally`, :guilabel:`Open Definition File`
+     - No equivalent; these only act on the VS Code window
 
 
 .. _how_vscode_troubleshoot:
