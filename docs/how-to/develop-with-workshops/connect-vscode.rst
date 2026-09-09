@@ -21,17 +21,10 @@ creates new ones,
 connects the window to a workshop over SSH,
 and offers to refresh a workshop when its definition changes.
 
-Following this guide, you will:
-
-- create a workshop for a Go project without installing Go on the host,
-- reopen the project inside that workshop and run the code there,
-- change the workshop definition and refresh the workshop from VS Code,
-- recover from a broken definition,
-- and switch between the host and the workshop at will.
-
-The whole walk-through takes about fifteen minutes;
-the first workshop launch is the longest step
-because it downloads the base image and the SDK.
+The steps below take a Go project
+from an empty directory to a server running inside a workshop,
+then change, break, and repair the workshop's definition
+and switch between the host and the workshop.
 
 .. figure:: /images/vscode/connected-window.png
    :align: center
@@ -47,12 +40,11 @@ Prerequisites
 
 Before starting, ensure you have these requirements satisfied:
 
-- |ws_markup| 0.9.5 or later installed and working on the host.
-
 - VS Code 1.90 or later installed on the host.
 
-You don't need Go on the host;
-the workshop provides it.
+The UI labels and screenshots match version 0.5.2
+of the Workshop extension;
+other versions may differ in details.
 
 
 Install the extension
@@ -91,7 +83,9 @@ opening the Workshops view.
 Create a project and a workshop
 -------------------------------
 
-Start with a small Go program in a fresh directory.
+Start with a small Go program in a fresh directory;
+Go itself isn't needed on the host,
+as the workshop provides it.
 Create :file:`hello-workshop/` with two files:
 
 .. code-block:: go
@@ -187,8 +181,8 @@ and pins the SDK to the channel the wizard recommends:
        channel: 1.27/stable
 
 
-Leave the notification open for now;
-the next section uses it.
+Keep the notification open;
+the next step uses it.
 
 .. note::
 
@@ -238,7 +232,7 @@ and reports the progress in a notification.
 
 When the workshop is ready,
 VS Code reconnects the same window to it over SSH.
-You know you're inside the workshop when:
+The window is inside the workshop when:
 
 - the remote indicator in the bottom-left corner reads
   :samp:`SSH: dev.hello-workshop.wp`,
@@ -411,11 +405,11 @@ confirm the new SDK in the integrated terminal:
 Recover from a broken definition
 --------------------------------
 
-Sooner or later a definition won't work
-on the first try.
-Open :file:`.workshop/dev.yaml` again
-and misspell the SDK name,
-for example :samp:`goo` instead of :samp:`go`,
+A definition can fail to apply,
+for example because of a misspelled SDK name.
+To see how the extension handles that,
+open :file:`.workshop/dev.yaml` again
+and change the SDK name to :samp:`goo`,
 then click :guilabel:`Refresh and Reopen` in the prompt.
 
 The window returns to the host as before,
@@ -470,10 +464,9 @@ The extension refreshes in the :option:`!--wait-on-error` mode of
 Switch between the host and the workshop
 ----------------------------------------
 
-Some work is better done on the host:
-using tools you only installed there,
-or editing the definition while the workshop is being rebuilt.
-To return to the host,
+To use tools installed only on the host,
+or to edit the definition while the workshop is being rebuilt,
+return to the host:
 click the remote indicator in the bottom-left corner
 and choose :guilabel:`Reopen Locally`:
 
@@ -494,7 +487,7 @@ click :guilabel:`Reopen in Workshop` on the :samp:`dev` row.
 The workshop is already running,
 so the window reconnects within seconds.
 
-When you're done for the day,
+To free the container's resources,
 right-click the :samp:`dev` row
 and choose :guilabel:`Turn Off…`.
 After a confirmation,
