@@ -110,6 +110,16 @@ The :ref:`command-line reference <ref_workshop__cli>` pages under
 are generated from the source, not edited by hand.
 See :ref:`contributing_doc_generation` for how they're produced.
 
+The VS Code screenshots under :file:`docs/images/vscode/`
+are generated as well,
+by the screenshot pipeline in the
+`VS Code extension repository <https://github.com/canonical/vscode-workshop>`_,
+so that every image shows the same VS Code version, theme, and window size.
+To update them,
+run :command:`npm run screenshots` in that repository
+and copy the resulting files from its :file:`media/screenshots/` directory;
+don't capture or edit them by hand.
+
 
 Test
 ~~~~
