@@ -186,20 +186,10 @@ the next step uses it.
 
 .. note::
 
-   The wizard is a front end for :command:`workshop init`.
-   To create the same definition from a terminal,
-   run the command in the project directory:
-
-   .. code-block:: console
-
-      $ workshop init dev --sdks go/1.27/stable
-
-        "dev" workshop created at ~/hello-workshop/.workshop/dev.yaml
-
-   The Workshops view picks up the new definition on its own.
-   Use the terminal when you need an SDK
-   that the wizard doesn't list,
-   or edit the definition afterwards.
+   The wizard lists only the reference SDKs published by Canonical.
+   To use any other SDK,
+   add it to the definition by hand,
+   as shown in :ref:`how_vscode_refresh`.
 
 
 Reopen the project in the workshop
@@ -334,6 +324,45 @@ Hovering over the row reveals its actions:
 If the view ever looks out of date,
 run :guilabel:`Workshop: Refresh Workshops` from the Command Palette
 to re-read the workshop list from the daemon.
+
+Every action in the view drives the same :program:`workshopd` daemon
+as the :program:`workshop` command,
+so the workshop's state is always visible from a terminal as well:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Action
+     - Command-line equivalent
+
+   * - :guilabel:`Add New Workshop`
+     - :command:`workshop init`, run by the wizard itself;
+       the exact command line appears in the :guilabel:`Workshop` output channel
+
+   * - :guilabel:`Reopen in Workshop`
+     - :command:`workshop launch` for a workshop that was never launched,
+       :command:`workshop start` for a stopped one,
+       then an SSH connection to the workshop's hostname
+
+   * - :guilabel:`Refresh and Reopen`
+     - :command:`workshop refresh` with :option:`!--wait-on-error`,
+       then the SSH connection again
+
+   * - :guilabel:`Continue Refresh`, :guilabel:`Abort Refresh`
+     - :command:`workshop refresh` with :option:`!--continue`
+       or :option:`!--abort`
+
+   * - :guilabel:`Turn Off…`
+     - :command:`workshop remove`
+
+   * - The expanded row
+     - :command:`workshop info`
+
+   * - :guilabel:`Reopen Locally`, :guilabel:`Open Definition File`
+     - No equivalent; these only act on the VS Code window
+
+
 
 
 .. _how_vscode_refresh:
