@@ -144,7 +144,9 @@ and follow the wizard:
 
 #. In :guilabel:`Select SDKs`, tick :samp:`go`
    and press :guilabel:`Enter`.
-   The list shows the reference SDKs published by Canonical,
+   The list shows the
+   `reference SDKs <https://github.com/canonical/reference-sdks>`_
+   published by Canonical,
    grouped by category;
    the info button next to an SDK opens its repository.
 
