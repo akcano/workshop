@@ -336,30 +336,30 @@ so the workshop's state is always visible from a terminal as well:
    * - Action
      - Command-line equivalent
 
-   * - :guilabel:`Add New Workshop`
+   * - :guilabel:`Add New Workshop`
      - :command:`workshop init`, run by the wizard itself;
        the exact command line appears in the :guilabel:`Workshop` output channel
 
-   * - :guilabel:`Reopen in Workshop`
+   * - :guilabel:`Reopen in Workshop`
      - :command:`workshop launch` for a workshop that was never launched,
        :command:`workshop start` for a stopped one,
        then an SSH connection to the workshop's hostname
 
-   * - :guilabel:`Refresh and Reopen`
+   * - :guilabel:`Refresh and Reopen`
      - :command:`workshop refresh` with :option:`!--wait-on-error`,
        then the SSH connection again
 
-   * - :guilabel:`Continue Refresh`, :guilabel:`Abort Refresh`
+   * - :guilabel:`Continue Refresh`, :guilabel:`Abort Refresh`
      - :command:`workshop refresh` with :option:`!--continue`
        or :option:`!--abort`
 
-   * - :guilabel:`Turn Off…`
+   * - :guilabel:`Turn Off…`
      - :command:`workshop remove`
 
    * - The expanded row
      - :command:`workshop info`
 
-   * - :guilabel:`Reopen Locally`, :guilabel:`Open Definition File`
+   * - :guilabel:`Reopen Locally`, :guilabel:`Open Definition File`
      - No equivalent; these only act on the VS Code window
 
 
