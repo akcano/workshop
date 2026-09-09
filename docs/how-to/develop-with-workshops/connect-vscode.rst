@@ -346,12 +346,12 @@ so the workshop's state is always visible from a terminal as well:
        then an SSH connection to the workshop's hostname
 
    * - :guilabel:`Refresh and Reopen`
-     - :command:`workshop refresh` with :option:`!--wait-on-error`,
+     - :command:`workshop refresh --wait-on-error`,
        then the SSH connection again
 
    * - :guilabel:`Continue Refresh`, :guilabel:`Abort Refresh`
-     - :command:`workshop refresh` with :option:`!--continue`
-       or :option:`!--abort`
+     - :command:`workshop refresh --continue`
+       or :command:`workshop refresh --abort`
 
    * - :guilabel:`Turn Off…`
      - :command:`workshop remove`
