@@ -115,9 +115,17 @@ are generated as well,
 by the screenshot pipeline in the
 `VS Code extension repository <https://github.com/canonical/vscode-workshop>`_,
 so that every image shows the same VS Code version, theme, and window size.
-To update them,
-run :command:`npm run screenshots` in that repository
-and copy the resulting files from its :file:`media/screenshots/` directory;
+To update them, from a checkout of that repository,
+install the screenshot generator's dependencies and run it:
+
+.. code-block:: console
+
+   $ cd scripts/screenshots
+   $ npm install
+   $ npm run screenshots
+
+Copy the resulting files from the repository's
+:file:`media/screenshots/` directory;
 don't capture or edit them by hand.
 
 

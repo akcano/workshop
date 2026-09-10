@@ -53,7 +53,7 @@ Install the extension
 Install the extension from the Visual Studio Marketplace:
 
 #. In VS Code, open the Extensions view
-   by pressing :guilabel:`Ctrl+Shift+X`.
+   by pressing :kbd:`Ctrl+Shift+X`.
 
 #. Search for :samp:`Workshop`
    and pick the extension published by Canonical.
@@ -119,7 +119,7 @@ Create :file:`hello-workshop/` with two files:
 
 
 Open the directory in VS Code,
-for example with :command:`code hello-workshop` from a terminal,
+for example with :command:`code hello-workshop` from a terminal,
 then click the :guilabel:`Workshop` icon in the Activity Bar.
 The project has no workshops yet,
 so the Workshops view offers to create one:
@@ -137,7 +137,7 @@ Click :guilabel:`Add New Workshop`
 and follow the wizard:
 
 #. In :guilabel:`Select SDKs`, tick :samp:`go`
-   and press :guilabel:`Enter`.
+   and press :kbd:`Enter`.
    The list shows the
    `reference SDKs <https://github.com/canonical/reference-sdks>`_
    published by Canonical,
@@ -152,12 +152,12 @@ and follow the wizard:
 
 #. In :guilabel:`Select a base`, keep :samp:`ubuntu@24.04`,
    marked as the default,
-   and press :guilabel:`Enter`.
+   and press :kbd:`Enter`.
 
 #. In :guilabel:`Enter a name`, keep :samp:`dev`
-   and press :guilabel:`Enter`.
+   and press :kbd:`Enter`.
 
-The wizard runs :command:`workshop init` for you,
+The wizard runs :command:`workshop init` for you,
 opens the resulting definition in the editor,
 and offers to reopen the window in the new workshop:
 
@@ -251,7 +251,7 @@ it starts a stopped workshop or connects to a running one directly.
 Run the code in the workshop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Open the integrated terminal with :guilabel:`Ctrl+\``;
+Open the integrated terminal with :kbd:`Ctrl+\``;
 it runs inside the workshop.
 Confirm where you are and that Go is available:
 
@@ -286,7 +286,7 @@ but Remote - SSH forwards the port to the host automatically
 and offers to open it in your browser.
 Visit http://localhost:8080 on the host
 to see the greeting from the workshop's Go runtime.
-Press :guilabel:`Ctrl+C` in the terminal to stop the server.
+Press :kbd:`Ctrl+C` in the terminal to stop the server.
 
 .. figure:: /images/vscode/port-forwarded.png
    :align: center
@@ -380,7 +380,8 @@ confirm the new SDK in the integrated terminal:
 
    workshop@dev:/project$ uv --version
 
-     uv 0.12.11
+The reported version follows the SDK's current default channel
+because the definition doesn't pin one.
 
 
 .. note::
@@ -446,7 +447,7 @@ the :samp:`dev` row offers :guilabel:`Continue Refresh`
 to retry from the failed task after you've fixed the cause,
 and :guilabel:`Abort Refresh` to revert.
 The extension refreshes in the :option:`!--wait-on-error` mode of
-:command:`workshop refresh`.
+:command:`workshop refresh`.
 
 
 .. _how_vscode_switch:
@@ -497,7 +498,7 @@ so the next :guilabel:`Reopen in Workshop` launches the workshop afresh.
 .. note::
 
    You can also connect without the extension.
-   Find the workshop's hostname with :command:`workshop info dev`
+   Find the workshop's hostname with :command:`workshop info dev`
    and use it with Remote - SSH's own
    :guilabel:`Remote-SSH: Connect to Host…` command.
 
@@ -507,9 +508,10 @@ so the next :guilabel:`Reopen in Workshop` launches the workshop afresh.
 Match actions to commands
 -------------------------
 
-Every action in the Workshops view drives the same :program:`workshopd` daemon
-as the :program:`workshop` command,
-so the workshop's state is always visible from a terminal as well:
+Workshop lifecycle operations in the Workshops view use
+the same :program:`workshopd` daemon as the :program:`workshop` command,
+so the workshop's state is also visible from a terminal.
+Editor-only actions operate on the VS Code window or its files instead:
 
 .. list-table::
    :header-rows: 1
@@ -519,27 +521,27 @@ so the workshop's state is always visible from a terminal as well:
      - Command-line equivalent
 
    * - :guilabel:`Add New Workshop`
-     - :command:`workshop init`, run by the wizard itself;
+     - :command:`workshop init`, run by the wizard itself;
        the exact command line appears in the :guilabel:`Workshop` output channel
 
    * - :guilabel:`Reopen in Workshop`
-     - :command:`workshop launch` for a workshop that was never launched,
-       :command:`workshop start` for a stopped one,
+     - :command:`workshop launch` for a workshop that was never launched,
+       :command:`workshop start` for a stopped one,
        then an SSH connection to the workshop's hostname
 
    * - :guilabel:`Refresh and Reopen`
-     - :command:`workshop refresh --wait-on-error`,
+     - :command:`workshop refresh --wait-on-error`,
        then the SSH connection again
 
    * - :guilabel:`Continue Refresh`, :guilabel:`Abort Refresh`
-     - :command:`workshop refresh --continue`
-       or :command:`workshop refresh --abort`
+     - :command:`workshop refresh --continue`
+       or :command:`workshop refresh --abort`
 
    * - :guilabel:`Turn Off…`
-     - :command:`workshop remove`
+     - :command:`workshop remove`
 
    * - The expanded row
-     - :command:`workshop info`
+     - :command:`workshop info`
 
    * - :guilabel:`Reopen Locally`, :guilabel:`Open Definition File`
      - No equivalent; these only act on the VS Code window
@@ -560,14 +562,14 @@ The Workshops view says Workshop isn't installed or running
 
       The Workshops view without a reachable daemon
 
-   Make sure :command:`workshop list` works in a terminal on the host,
+   Make sure :command:`workshop list` works in a terminal on the host,
    then click :guilabel:`Reload`.
    If the command fails as well,
    see :ref:`how_troubleshoot`.
 
 The Workshops view says the installed Workshop is too old
    The extension requires |ws_markup| 0.9.5 or later.
-   Upgrade with :command:`sudo snap refresh workshop`
+   Upgrade with :command:`sudo snap refresh workshop`
    and click :guilabel:`Reload`.
 
 The Workshops view is empty in Restricted Mode
@@ -589,11 +591,14 @@ The Workshops view is empty in Restricted Mode
           }
       }
 
-The Workshop output shows what happened
-   Every action the extension takes,
-   including the exact :command:`workshop init` command the wizard runs,
-   is logged to the :guilabel:`Workshop` channel of the Output panel
-   (:guilabel:`View` > :guilabel:`Output`).
+The Workshop output shows diagnostic information
+   The :guilabel:`Workshop` channel of the Output panel
+   (:guilabel:`View` > :guilabel:`Output`)
+   records extension diagnostics,
+   including the exact :command:`workshop init` command the wizard runs
+   and reported errors.
+   Progress for other operations appears in notifications
+   or task-specific error log views.
 
 
 See also
