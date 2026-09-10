@@ -18,9 +18,9 @@ The :file:`sdkcraft.yaml` file is the *build-time* SDK definition:
 into the resulting package, copying plug, slot, and metadata fields across.
 
 |sdk_markup| builds on the
-`craft-application <https://canonical-craft-application.readthedocs-hosted.com/>`__
+`craft-application <https://documentation.ubuntu.com/craft-application/latest/>`__
 framework and
-`craft-parts <https://canonical-craft-parts.readthedocs-hosted.com/>`__
+`craft-parts <https://documentation.ubuntu.com/craft-parts/latest/>`__
 for build orchestration. Many fields are inherited from :samp:`craft-application`.
 
 
@@ -121,7 +121,7 @@ Top-level fields
      - array
      - Additional package repositories to enable while building.
        Standard :samp:`craft-application` machinery;
-       see the `craft-archives reference <https://canonical-craft-archives.readthedocs-hosted.com/>`__.
+       see the `craft-archives reference <https://documentation.ubuntu.com/craft-archives/latest/>`__.
 
    * - :samp:`parts`
      - object
