@@ -76,6 +76,12 @@ EOF
     # The /snap directory does not exist in some environments
     [ ! -d /snap ] && ln -s /var/lib/snapd/snap /snap
 
+    # Hold refreshes for the rest of the run system-wide. Otherwise, a snap
+    # refresh (lxd or snapd) mid-run could cause transient failures (squashfs
+    # remount, websocket connection being reset causing workshop exec issues,
+    # etc.).
+    snap refresh --hold || true
+
     setup_lxd
 
     retry 5 snap install --classic --channel=1.26/stable go
