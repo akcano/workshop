@@ -116,7 +116,7 @@ In this documentation
        :ref:`Changes and tasks <exp_changes_tasks>`
 
    * - **Use workshops**
-     - :ref:`Connect VS Code <how_vscode_connect_remote>` •
+     - :ref:`Develop in VS Code <how_vscode_connect_remote>` •
        :ref:`JetBrains Gateway <how_jetbrains_gateway>` •
        :ref:`JupyterLab in browser <how_jupyterlab_run_in_browser>` •
        :ref:`Manage Python environments <how_manage_python_environments>` •
