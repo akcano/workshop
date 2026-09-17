@@ -245,14 +245,26 @@ a virtual machine workshop that declares an SDK is refused:
 Switch LXD to :samp:`6/edge` as the prerequisites require.
 
 
-SDK interfaces are not connected automatically
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Most interfaces are unsupported
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Launching a container connects the SDK plugs that qualify for it;
-launching a virtual machine skips that step.
-Connect the plugs you need with :command:`workshop connect`.
-Refreshing a virtual machine workshop does not restore connections either,
-so reconnect them after a refresh.
+Currently, virtual machine workshops only support the :samp:`mount` and :samp:`secret` interfaces.
+Other interfaces will not be auto-connected and cannot be connected manually.
+
+Virtual machine workshops can still install SDKs
+that contain unsupported plugs and slots,
+but these plugs and slots will not be listed in :command:`workshop connections`.
+
+
+Removing stopped workshops
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Disconnecting a :samp:`mount` interface plug
+requires the workshop to be running.
+This can prevent removing a stopped workshop.
+Either start the workshop before removing it,
+or see :ref:`how_purge`.
+A future |ws_markup| release will remove this limitation.
 
 
 See also
