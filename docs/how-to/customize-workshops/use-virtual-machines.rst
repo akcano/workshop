@@ -17,7 +17,7 @@ How to use virtual machines
 A workshop runs in an LXD container unless its definition says otherwise.
 |ws_markup| can instead run it as a full virtual machine,
 which draws a harder boundary than a container can.
-Reach for one when you want that boundary
+Reach for a virtual machine when you want that boundary
 around an AI agent working in the project,
 or when the workshop itself has to run LXD containers and virtual machines.
 
