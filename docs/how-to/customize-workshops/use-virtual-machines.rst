@@ -251,7 +251,7 @@ a virtual machine workshop that declares an SDK is refused:
 
 
 SDK interfaces are not connected automatically
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Launching a container connects the SDK plugs that qualify for it;
 launching a virtual machine skips that step.
