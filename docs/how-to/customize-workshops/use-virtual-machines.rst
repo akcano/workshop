@@ -16,8 +16,8 @@ How to use virtual machines
 
 A workshop runs in an LXD container unless its definition says otherwise.
 |ws_markup| can instead run it as a full virtual machine,
-which is worth the cost when a container cannot go far enough:
-when you want a harder boundary
+which draws a harder boundary than a container can.
+Reach for one when you want that boundary
 around an AI agent working in the project,
 or when the workshop itself has to run LXD containers and virtual machines.
 
@@ -80,8 +80,8 @@ to containers only,
 so a virtual machine workshop on it must declare no SDKs.
 Install LXD from the :samp:`latest/edge` channel to get the capability.
 
-A workshop with no SDKs needs nothing beyond a working virtual machine,
-so you can follow the rest of this guide either way.
+A workshop that declares no SDKs is unaffected by this capability
+and needs nothing beyond a working virtual machine.
 
 
 Opt in to virtual machines
@@ -199,13 +199,6 @@ use the same commands as a container:
    $ workshop remove <NAME>
 
      "<NAME>" removed
-
-
-.. note::
-
-   A virtual machine is shut down rather than killed,
-   because forcing it off risks the integrity of its filesystem,
-   so :command:`workshop stop` can take longer than it does for a container.
 
 
 A running virtual machine workshop also starts again on its own
