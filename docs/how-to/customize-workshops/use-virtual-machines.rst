@@ -287,6 +287,7 @@ How-to guides:
 
 Reference:
 
+- :ref:`ref_workshop_connect`
 - :ref:`ref_workshop_definition`
 - :ref:`ref_workshop_info`
 - :ref:`ref_workshop_init`
