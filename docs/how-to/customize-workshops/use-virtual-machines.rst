@@ -4,7 +4,7 @@
    :description: How-to guide on opting into the experimental virtual machine
                  runtime for workshops, covering the experimental snap
                  setting and daemon restart, both ways to declare the
-                 lxd-vm runtime, moving off the confinement key, launching
+                 lxd-vm runtime, replacing the confinement key, launching
                  and verifying the workshop, and the limitations that
                  separate it from a container.
 
@@ -54,7 +54,7 @@ Check that |ws_markup| lists the runtimes it supports:
      ...
 
 
-Check the LXD version:
+Check that LXD is installed:
 
 .. code-block:: console
 
@@ -144,8 +144,8 @@ Add the same key by hand to a definition you already wrote.
 omitting it selects :samp:`lxd-container`.
 
 
-Move from the confinement key
------------------------------
+Replace the confinement key
+---------------------------
 
 |ws_markup| does not read a :samp:`confinement` key.
 A definition that still declares :samp:`confinement: virtual-machine`
@@ -164,14 +164,8 @@ and refreshing it against the corrected definition fails:
      error: cannot refresh "<NAME>": cannot refresh "<NAME>": runtime changed from "lxd-container" to "lxd-vm"
 
 
-Remove the workshop,
-then launch it again as described in :ref:`how_use_virtual_machines_launch`:
-
-.. code-block:: console
-
-   $ workshop remove <NAME>
-
-     "<NAME>" removed
+Remove the workshop with :command:`workshop remove`,
+then launch it again as described in :ref:`how_use_virtual_machines_launch`.
 
 
 .. _how_use_virtual_machines_launch:
