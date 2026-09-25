@@ -461,16 +461,17 @@ func (m *InterfaceManager) reloadConnections(workshopNames map[string][]string, 
 }
 
 func (m *InterfaceManager) resolveWorkshopBindings(w *workshop.Workshop) error {
+	masters, slaves := w.Bound()
 	for _, s := range w.Sdks {
 		for _, plug := range m.repo.Plugs(w.Project.ProjectId, w.Name, s.Name) {
 			// Check that bound plugs are added or skipped as one unit.
-			mref, slaves := MaybeBound(w, plug.Ref())
-			if mref == plug.Ref() {
-				for _, s := range slaves {
-					if m.repo.Plug(s.ProjectId, s.Workshop, s.Sdk, s.Name) == nil {
-						return fmt.Errorf("plug %q was skipped while bound to plug %q", s.ShortRef(), plug.Ref().ShortRef())
-					}
+			for _, s := range masters[plug.Ref()] {
+				if m.repo.Plug(s.ProjectId, s.Workshop, s.Sdk, s.Name) == nil {
+					return fmt.Errorf("plug %q was skipped while bound to plug %q", s.ShortRef(), plug.Ref().ShortRef())
 				}
+			}
+			mref, ok := slaves[plug.Ref()]
+			if !ok {
 				continue
 			}
 			master := m.repo.Plug(mref.ProjectId, mref.Workshop, mref.Sdk, mref.Name)
@@ -512,33 +513,27 @@ func (m *InterfaceManager) resolveWorkshopConnections(w *workshop.Workshop) erro
 }
 
 func (m *InterfaceManager) checkConflictingMounts(w *workshop.Workshop) error {
+	_, bound := w.Bound()
+
 	var plugs []*sdk.PlugInfo
 	for _, sk := range w.Sdks {
 		for _, plug := range m.repo.Plugs(w.Project.ProjectId, w.Name, sk.Name) {
+			if _, ok := bound[plug.Ref()]; ok {
+				// exclude bound plugs
+				continue
+			}
 			if plug.Interface == "mount" {
 				plugs = append(plugs, plug)
 			}
 		}
 	}
 
-	sdks := map[string]workshop.SdkRecord{}
-	for _, sk := range w.File.Sdks {
-		sdks[sk.Name] = sk
-	}
-
 	for _, plug := range plugs {
-		if sdks[plug.Sdk.Name].Plugs[plug.Name].Bind != nil {
-			continue
-		}
 		candidateTarget, _ := plug.Lookup("workshop-target")
 
 		idx := slices.IndexFunc(plugs, func(pi *sdk.PlugInfo) bool {
 			// exclude oneself
 			if pi.Sdk.Name == plug.Sdk.Name && pi.Name == plug.Name {
-				return false
-			}
-			// exclude bound plugs
-			if sdks[pi.Sdk.Name].Plugs[pi.Name].Bind != nil {
 				return false
 			}
 			target, _ := pi.Lookup("workshop-target")
