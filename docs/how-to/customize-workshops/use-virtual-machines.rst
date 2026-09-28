@@ -2,8 +2,9 @@
 
 .. meta::
    :description: How-to guide on opting into the experimental virtual machine
-                 runtime for workshops, covering the experimental snap
-                 setting and daemon restart, both ways to declare the
+                 runtime for workshops, covering the LXD channel it needs,
+                 the experimental snap setting and daemon restart,
+                 both ways to declare the
                  lxd-vm runtime, launching and verifying the workshop,
                  and the limitations that separate it from a container.
 
@@ -45,7 +46,7 @@ Prerequisites
 Before starting, ensure you have these requirements satisfied:
 
 - A |ws_markup| installation that supports the :samp:`runtime` key.
-- An LXD installation that can run virtual machines,
+- LXD from the :samp:`6/edge` channel,
   on a host with hardware virtualization available.
 - A workshop you have not launched yet.
   The runtime is fixed when a workshop is launched,
@@ -62,38 +63,19 @@ Check that |ws_markup| lists the runtimes it supports:
      ...
 
 
-Check that LXD is installed:
+Switch LXD to the :samp:`6/edge` channel:
 
 .. code-block:: console
 
-   $ lxc version
-
-     Client version: 6.9
-     Server version: 6.9
+   $ sudo snap refresh --channel=6/edge lxd
 
 
-Requirements for SDKs
-~~~~~~~~~~~~~~~~~~~~~
+.. warning::
 
-A virtual machine workshop that carries SDKs
-needs one more capability from LXD:
-the ability to mount shifted disks into a virtual machine.
-Query LXD for it:
-
-.. code-block:: console
-
-   $ lxc query /1.0/metadata/configuration | jq -r '.configs["device-disk"]["device-conf"].keys[] | select(has("shift")) | .shift.condition'
-
-     container
-
-
-A result of :samp:`container` means this LXD offers shifted mounts
-to containers only,
-so a virtual machine workshop on it must declare no SDKs.
-Install LXD from the :samp:`latest/edge` channel to get the capability.
-
-A workshop that declares no SDKs is unaffected by this capability
-and needs nothing beyond a working virtual machine.
+   The :samp:`edge` channel carries LXD builds that haven't been released yet,
+   so it is experimental as well.
+   The switch applies to the whole host, including your container workshops,
+   and LXD doesn't support moving back from :samp:`6/edge` to :samp:`6/stable`.
 
 
 Opt in to virtual machines
@@ -250,8 +232,7 @@ Remove the workshop and launch it again to change the runtime.
 SDK support depends on LXD
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Where LXD offers shifted mounts to containers only,
-as described in the prerequisites,
+On LXD from the :samp:`6/stable` channel,
 a virtual machine workshop that declares an SDK is refused:
 
 .. code-block:: console
@@ -259,6 +240,9 @@ a virtual machine workshop that declares an SDK is refused:
    $ workshop refresh <NAME>
 
      error: cannot refresh "<NAME>": cannot refresh "<NAME>": SDKs are currently unavailable for virtual machines
+
+
+Switch LXD to :samp:`6/edge` as the prerequisites require.
 
 
 SDK interfaces are not connected automatically
