@@ -34,6 +34,9 @@ from a coding agent that works in it.
    A virtual machine consumes more memory and disk than a container,
    and it does not support every feature a container does;
    the :ref:`how_use_virtual_machines_limitations` section lists what it skips.
+   A |ws_markup| upgrade can also change the runtime incompatibly,
+   so you may need to remove your virtual machine workshops
+   before you upgrade.
    Opt in only when you need the stronger boundary.
 
 
