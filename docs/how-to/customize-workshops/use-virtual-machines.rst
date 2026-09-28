@@ -114,8 +114,7 @@ and reports the two commands that change that:
      To opt in: "sudo snap set workshop workshop.experimental-vms=1 && sudo snap restart workshop.workshopd"
 
 
-Run both of them.
-The restart is part of the opt-in, not a follow-up you can defer:
+Run both of them:
 
 .. code-block:: console
 
