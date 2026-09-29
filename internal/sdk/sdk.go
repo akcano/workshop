@@ -28,6 +28,7 @@ import (
 	"github.com/canonical/workshop/internal/dirs"
 	"github.com/canonical/workshop/internal/metautil"
 	"github.com/canonical/workshop/internal/timeutil"
+	"github.com/canonical/workshop/internal/yamlutil"
 )
 
 type Meta struct {
@@ -147,6 +148,21 @@ type sdkYaml struct {
 	BuiltAt *timeutil.TimeUTC `yaml:"sdkcraft-started-at,omitempty"`
 
 	Type string `yaml:"type,omitempty"`
+	// Avoid UnknownFieldsError for "hooks". It's a known field, just not
+	// used for anything except the sketch SDK.
+	Hooks yamlutil.NodeRef `yaml:"hooks"`
+}
+
+func (s *sdkYaml) UnmarshalYAML(value *yaml.Node) error {
+	// Use distinct type to avoid infinite recursion.
+	type sdk sdkYaml
+	err := yamlutil.UnmarshalStrict((*sdk)(s), value)
+
+	context := "SDK definition YAML"
+	if s.Name == Sketch {
+		context = "sketch SDK YAML"
+	}
+	return yamlutil.AttachContext(context, err)
 }
 
 // SketchSDKYaml describes the editable YAML shape of a sketch SDK.
@@ -304,6 +320,10 @@ func ReadSdkInfo(yamlData []byte, projectId, workshop string) (*Info, error) {
 	err := yaml.Unmarshal(yamlData, &sdkYaml)
 	if err != nil {
 		return nil, err
+	}
+
+	if sdkYaml.Name != Sketch && sdkYaml.Hooks.Node != nil {
+		return nil, fmt.Errorf("SDK definition YAML: only the %q SDK supports inline hooks", Sketch)
 	}
 
 	if sdkYaml.Type == "" {
