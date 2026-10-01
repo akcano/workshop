@@ -49,6 +49,13 @@ steps:
       sudo snap install sdkcraft --classic --edge
       snap list workshop sdkcraft lxd
       df -h / /mnt || true
+  - name: Allow LXD container egress past Docker's FORWARD policy
+    run: |
+      sudo iptables -P FORWARD ACCEPT
+      sudo ip6tables -P FORWARD ACCEPT || true
+      sudo lxc launch ubuntu:24.04 egress-check
+      for i in $(seq 1 30); do sudo lxc exec egress-check -- curl -sS -o /dev/null -w '%{http_code}\n' http://archive.ubuntu.com/ubuntu/ && break; sleep 2; done
+      sudo lxc delete --force egress-check
 
 tools:
   bash: [":*"]
@@ -61,7 +68,7 @@ safe-outputs:
     max: 1
 ---
 
-# Execute one Workshop documentation page
+# Execute doc page configure-mount
 
 You are a documentation-testing agent. Execute the page at `$DOC_PAGE` on
 this runner, step by step, and report whether it works as written.
