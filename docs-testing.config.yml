@@ -1,0 +1,33 @@
+version: 1
+
+targets:
+  - docs/reference/definition-files/workshop-definition.rst
+  - docs/reference/cli/workshopctl.rst
+  - docs/reference/cli/sdkcraft-clean.rst
+  - docs/reference/cli/sdkcraft-init.rst
+  - docs/reference/cli/sdkcraft-pack.rst
+  - docs/reference/cli/sdkcraft-release.rst
+  - docs/reference/cli/sdkcraft-test.rst
+  - docs/reference/cli/sdkcraft-try.rst
+
+sources:
+  - name: workshop
+    repo: akcano/workshop
+    ref: pilot/docs-testing
+  - name: sdkcraft
+    repo: canonical/sdkcraft
+    ref: main
+
+source_map:
+  - area: "Workshop definition and workshopctl"
+    paths:
+      - docs/reference/definition-files/workshop-definition.rst
+      - docs/reference/cli/workshopctl.rst
+    sources: [workshop]
+  - area: "SDKcraft CLI"
+    paths: ["docs/reference/cli/sdkcraft-*.rst"]
+    sources: [sdkcraft]
+
+tests:
+  - reference-review
+  - reference-completeness

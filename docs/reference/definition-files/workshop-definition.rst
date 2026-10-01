@@ -37,7 +37,7 @@ or several under :file:`.workshop/`.
 
 - A workshop name must start with a lowercase letter
   and may contain lowercase letters, digits, and hyphens between them.
-  Up to 40 characters.
+  Up to 64 characters.
 
 
 Top-level fields

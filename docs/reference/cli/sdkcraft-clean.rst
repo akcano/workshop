@@ -59,5 +59,5 @@ Clean in destructive mode:
 
 .. code-block:: console
 
-   $ sdkcraft clean --destructive-mode
+   $ sdkcraft clean --destructive
 

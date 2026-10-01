@@ -52,7 +52,7 @@ The arguments are as follows:
      - Required when :samp:`<STATUS>` is :samp:`waiting` or :samp:`error`;
        not allowed with :samp:`okay`.
      - Arbitrary string explaining the status;
-       7–70 characters.
+       7–120 characters.
 
 
 .. rubric:: Examples

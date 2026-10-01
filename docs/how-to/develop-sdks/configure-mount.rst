@@ -136,7 +136,7 @@ The numeric uid and gid show how |ws_markup| resolved the attributes:
 
    $ workshop exec dev -- ls -ldn /home/workshop/.private-secrets
 
-     drwx------ 2 1000 1000 4096 May 14 10:32 /home/workshop/.private-secrets
+     drwxr-x--- 2 1000 1000 4096 May 14 10:32 /home/workshop/.private-secrets
 
 
 For a read-only mount,

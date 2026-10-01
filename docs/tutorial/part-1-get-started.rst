@@ -210,7 +210,7 @@ passing the base, the SDKs, and their channels on the command line:
 
 .. code-block:: console
 
-   $ workshop init dev --sdks ollama/cpu/stable --base ubuntu@22.04
+   $ workshop init dev --sdk ollama/cpu/stable --base ubuntu@22.04
 
      "dev" workshop created at /home/user/ollama-python-project/.workshop/dev.yaml
 
