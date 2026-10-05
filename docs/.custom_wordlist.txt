@@ -144,6 +144,7 @@ opencode
 OpenVINO
 passthrough
 pathname
+PCIe
 PlugRef
 PRs
 prebuilt

@@ -267,6 +267,28 @@ or see :ref:`how_purge`.
 A future |ws_markup| release will remove this limitation.
 
 
+Virtual hardware is restrictive
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Virtual machines are modeled on physical hardware,
+and have some of the same limitations.
+When the workshop starts,
+the following quantities are set in stone:
+
+- The number of processors.
+- Total system memory.
+- The root filesystem size.
+
+Interfaces can be connected and disconnected while the workshop is running,
+but much like devices plugged into a physical machine,
+there's a limit to the total number of interface connections.
+
+The simplest way to avoid these limits is to disconnect unused interfaces.
+In some cases, |ws_markup| uses the number of SDKs to predict hardware requirements;
+adding an SDK without many plugs or slots
+can help to compensate for one with several active connections.
+
+
 See also
 --------
 
@@ -294,3 +316,4 @@ Reference:
 - :ref:`ref_workshop_remove`
 - :ref:`ref_workshop_start`
 - :ref:`ref_workshop_stop`
+- :ref:`ref_workshop_interfaces_in_vms`
