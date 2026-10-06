@@ -44,7 +44,6 @@ func (s *getSecretSuite) TestInterceptGetSecretAPIOutput(c *check.C) {
 	)
 	c.Assert(err, check.IsNil)
 	err = fmt.Errorf("lookup: %w", &client.Error{
-		Kind:    client.ErrorKindSecretNotFound,
 		Message: "fallback message",
 		Value: map[string]any{
 			"exit-code": float64(7),
@@ -91,7 +90,6 @@ func (s *getSecretSuite) TestInterceptGetSecretInvalidExitCode(c *check.C) {
 	)
 	c.Assert(err, check.IsNil)
 	err = &client.Error{
-		Kind:    client.ErrorKindSecretProviderLocked,
 		Message: "provider locked",
 		Value:   map[string]any{"exit-code": 0.5},
 	}
@@ -115,7 +113,7 @@ func (s *getSecretSuite) TestInterceptGetSecretMissingExitCode(c *check.C) {
 	)
 	c.Assert(err, check.IsNil)
 
-	exitCode := req.responseHandler(nil, nil, client.ErrorPlugNotConnected)
+	exitCode := req.responseHandler(nil, nil, errors.New("plug not connected"))
 
 	c.Check(exitCode, check.Equals, 255)
 	c.Check(stdout.String(), check.Equals, "")
@@ -173,7 +171,6 @@ func (s *getSecretSuite) TestInterceptGetSecretZeroExitCode(c *check.C) {
 	)
 	c.Assert(err, check.IsNil)
 	err = &client.Error{
-		Kind:    client.ErrorKindPlugNotConnected,
 		Message: "plug not connected",
 		Value: map[string]any{
 			"exit-code": float64(0),

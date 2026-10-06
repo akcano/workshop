@@ -36,7 +36,6 @@ func (defaultResponseHandlerSuite) TestAPIOutput(c *check.C) {
 	var stdout, stderr bytes.Buffer
 	handler := defaultResponseHandler(&stdout, &stderr, 1)
 	err := fmt.Errorf("request: %w", &client.Error{
-		Kind:    client.ErrorKindSecretNotFound,
 		Message: "fallback message",
 		Value: map[string]any{
 			"exit-code": float64(2),
@@ -139,7 +138,6 @@ func (defaultResponseHandlerSuite) TestZeroExitCode(c *check.C) {
 	var stdout, stderr bytes.Buffer
 	handler := defaultResponseHandler(&stdout, &stderr, 1)
 	err := &client.Error{
-		Kind:    client.ErrorKindPlugNotConnected,
 		Message: "plug not connected",
 		Value:   map[string]any{"exit-code": float64(0)},
 	}

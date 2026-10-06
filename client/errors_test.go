@@ -16,7 +16,6 @@ package client_test
 
 import (
 	"errors"
-	"fmt"
 
 	"gopkg.in/check.v1"
 
@@ -245,48 +244,6 @@ func (errorSuite) TestErrorOutputWrongType(c *check.C) {
 	c.Check(hasStderr, check.Equals, false)
 	c.Check(stdout, check.Equals, "")
 	c.Check(hasStdout, check.Equals, false)
-}
-
-// TestPlugNotConnectedErrorIs checks that an unconnected-plug API error
-// matches its sentinel even when wrapped with diagnostic context.
-func (errorSuite) TestPlugNotConnectedErrorIs(c *check.C) {
-	err := &client.Error{Kind: client.ErrorKindPlugNotConnected}
-
-	c.Check(errors.Is(err, client.ErrorPlugNotConnected), check.Equals, true)
-	wrapped := fmt.Errorf("request failed: %w", err)
-	c.Check(errors.Is(wrapped, client.ErrorPlugNotConnected), check.Equals, true)
-}
-
-// TestSecretMultipleMatchesErrorIs checks that an ambiguous lookup API
-// error matches its sentinel, including through wrapping.
-func (errorSuite) TestSecretMultipleMatchesErrorIs(c *check.C) {
-	err := &client.Error{Kind: client.ErrorKindSecretMultipleMatches}
-
-	c.Check(errors.Is(err, client.ErrorSecretMultipleMatches), check.Equals, true)
-	wrapped := fmt.Errorf("request failed: %w", err)
-	c.Check(errors.Is(wrapped, client.ErrorSecretMultipleMatches),
-		check.Equals, true)
-}
-
-// TestSecretNotFoundErrorIs checks that a missing-secret API error matches
-// its sentinel, including through wrapping.
-func (errorSuite) TestSecretNotFoundErrorIs(c *check.C) {
-	err := &client.Error{Kind: client.ErrorKindSecretNotFound}
-
-	c.Check(errors.Is(err, client.ErrorSecretNotFound), check.Equals, true)
-	wrapped := fmt.Errorf("request failed: %w", err)
-	c.Check(errors.Is(wrapped, client.ErrorSecretNotFound), check.Equals, true)
-}
-
-// TestSecretProviderLockedErrorIs checks that a locked-provider API error
-// matches its sentinel, including through wrapping.
-func (errorSuite) TestSecretProviderLockedErrorIs(c *check.C) {
-	err := &client.Error{Kind: client.ErrorKindSecretProviderLocked}
-
-	c.Check(errors.Is(err, client.ErrorSecretProviderLocked), check.Equals, true)
-	wrapped := fmt.Errorf("request failed: %w", err)
-	c.Check(errors.Is(wrapped, client.ErrorSecretProviderLocked),
-		check.Equals, true)
 }
 
 // TestWaitingChangeErrorIs checks that a no-waiting-change API error matches
