@@ -82,6 +82,9 @@ And gets installed during the :samp:`setup-project` phase:
 This design ensures that the service starts automatically
 when the workshop is launched,
 and stops cleanly when the workshop is terminated.
+A service that needs a user's credential
+can request it as a systemd credential;
+see :ref:`how_use_secrets`.
 
 
 .. _exp_best_parts_decomposition:
