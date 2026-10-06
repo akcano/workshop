@@ -146,12 +146,14 @@ OpenVINO
 passthrough
 pathname
 PlugRef
+PRs
 prebuilt
 predefined
 preexisting
 prepackaged
 prerelease
 presketching
+PRs
 PYTHONHOME
 QPA
 readme

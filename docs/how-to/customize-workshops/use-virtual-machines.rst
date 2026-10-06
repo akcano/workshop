@@ -2,11 +2,11 @@
 
 .. meta::
    :description: How-to guide on opting into the experimental virtual machine
-                 runtime for workshops, covering the experimental snap
-                 setting and daemon restart, both ways to declare the
-                 lxd-vm runtime, replacing the confinement key, launching
-                 and verifying the workshop, and the limitations that
-                 separate it from a container.
+                 runtime for workshops, covering the LXD channel it needs,
+                 the experimental snap setting and daemon restart,
+                 both ways to declare the
+                 lxd-vm runtime, launching and verifying the workshop,
+                 and the limitations that separate it from a container.
 
 How to use virtual machines
 ===========================
@@ -34,6 +34,9 @@ from a coding agent that works in it.
    A virtual machine consumes more memory and disk than a container,
    and it does not support every feature a container does;
    the :ref:`how_use_virtual_machines_limitations` section lists what it skips.
+   A |ws_markup| upgrade can also change the runtime incompatibly,
+   so you may need to remove your virtual machine workshops
+   before you upgrade.
    Opt in only when you need the stronger boundary.
 
 
@@ -43,7 +46,7 @@ Prerequisites
 Before starting, ensure you have these requirements satisfied:
 
 - A |ws_markup| installation that supports the :samp:`runtime` key.
-- An LXD installation that can run virtual machines,
+- LXD from the :samp:`6/edge` channel,
   on a host with hardware virtualization available.
 - A workshop you have not launched yet.
   The runtime is fixed when a workshop is launched,
@@ -60,38 +63,19 @@ Check that |ws_markup| lists the runtimes it supports:
      ...
 
 
-Check that LXD is installed:
+Switch LXD to the :samp:`6/edge` channel:
 
 .. code-block:: console
 
-   $ lxc version
-
-     Client version: 6.9
-     Server version: 6.9
+   $ sudo snap refresh --channel=6/edge lxd
 
 
-Requirements for SDKs
-~~~~~~~~~~~~~~~~~~~~~
+.. warning::
 
-A virtual machine workshop that carries SDKs
-needs one more capability from LXD:
-the ability to mount shifted disks into a virtual machine.
-Query LXD for it:
-
-.. code-block:: console
-
-   $ lxc query /1.0/metadata/configuration | jq -r '.configs["device-disk"]["device-conf"].keys[] | select(has("shift")) | .shift.condition'
-
-     container
-
-
-A result of :samp:`container` means this LXD offers shifted mounts
-to containers only,
-so a virtual machine workshop on it must declare no SDKs.
-Install LXD from the :samp:`latest/edge` channel to get the capability.
-
-A workshop that declares no SDKs is unaffected by this capability
-and needs nothing beyond a working virtual machine.
+   The :samp:`edge` channel carries LXD builds that haven't been released yet,
+   so it is experimental as well.
+   The switch applies to the whole host, including your container workshops,
+   and LXD doesn't support moving back from :samp:`6/edge` to :samp:`6/stable`.
 
 
 Opt in to virtual machines
@@ -111,8 +95,7 @@ and reports the two commands that change that:
      To opt in: "sudo snap set workshop workshop.experimental-vms=1 && sudo snap restart workshop.workshopd"
 
 
-Run both of them.
-The restart is part of the opt-in, not a follow-up you can defer:
+Run both of them:
 
 .. code-block:: console
 
@@ -149,32 +132,6 @@ Add the same key by hand to a definition you already wrote.
 :samp:`runtime` accepts :samp:`lxd-container` and :samp:`lxd-vm`;
 omitting it selects :samp:`lxd-container`.
 
-
-Replace the confinement key
----------------------------
-
-|ws_markup| does not read a :samp:`confinement` key.
-A definition that still declares :samp:`confinement: virtual-machine`
-launches a container, without an error,
-so replace that line with :samp:`runtime: lxd-vm`.
-
-A virtual machine workshop that an earlier |ws_markup| version
-launched from such a definition
-reports :samp:`runtime: lxd-container` in :command:`workshop info`,
-and refreshing it against the corrected definition fails:
-
-.. code-block:: console
-
-   $ workshop refresh <NAME>
-
-     error: cannot refresh "<NAME>": cannot refresh "<NAME>": runtime changed from "lxd-container" to "lxd-vm"
-
-
-Remove the workshop with :command:`workshop remove`,
-then launch it again as described in :ref:`how_use_virtual_machines_launch`.
-
-
-.. _how_use_virtual_machines_launch:
 
 Launch and verify
 -----------------
@@ -275,8 +232,7 @@ Remove the workshop and launch it again to change the runtime.
 SDK support depends on LXD
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Where LXD offers shifted mounts to containers only,
-as described in the prerequisites,
+On LXD from the :samp:`6/stable` channel,
 a virtual machine workshop that declares an SDK is refused:
 
 .. code-block:: console
@@ -284,6 +240,9 @@ a virtual machine workshop that declares an SDK is refused:
    $ workshop refresh <NAME>
 
      error: cannot refresh "<NAME>": cannot refresh "<NAME>": SDKs are currently unavailable for virtual machines
+
+
+Switch LXD to :samp:`6/edge` as the prerequisites require.
 
 
 SDK interfaces are not connected automatically
