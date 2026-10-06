@@ -18,44 +18,6 @@ such as an API key for an AI coding agent.
 |ws_markup| can deliver that credential to the workshop
 without writing the value into the workshop definition
 or the project directory.
-There are two ways to do it,
-so pick one before you start:
-
-.. list-table::
-   :header-rows: 1
-   :widths: 1 2 2
-
-   * -
-     - From the host keyring
-     - For a single command
-   * - What persists
-     - The value stays in your keyring;
-       the workshop keeps only the connection,
-       which survives refreshes until you disconnect it
-     - Nothing; the next command in the workshop doesn't see the value
-   * - Who can read the value
-     - Any command in the workshop,
-       through the connected plug,
-       each time it asks for the value
-     - The command you run and the processes it starts,
-       for that run only
-   * - Retyping
-     - None once you connect the plug
-     - Every run
-   * - Suits
-     - An SDK you use repeatedly
-     - A one-off command that you run yourself
-
-
-.. warning::
-
-   Don't put a secret in the workshop definition, its actions,
-   project files, or shell profiles.
-   These are plain files:
-   the project directory, definition included,
-   is visible inside the workshop and often ends up in version control,
-   and a shell profile exports its variables to every command you run.
-
 
 Prerequisites
 -------------
@@ -78,6 +40,54 @@ Before starting, ensure you have these requirements satisfied:
 - A workshop definition that includes an SDK declaring a :samp:`secret` plug.
   The SDK's documentation names the plug
   and the credential it expects.
+
+
+The OpenAI API key in the examples below is illustrative.
+Use the keyring attributes, slot name, and environment variable
+expected by your SDK instead.
+
+
+There are two ways to provide a credential,
+so pick one before you start:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 1 2 2
+
+   * -
+     - From the host keyring
+     - For a single command
+
+   * - What persists
+     - The value stays in your keyring;
+       the workshop keeps only the connection,
+       which survives refreshes until you disconnect it
+     - Nothing; the next command in the workshop doesn't see the value
+
+   * - Who can read the value
+     - Any command in the workshop,
+       through the connected plug,
+       each time it asks for the value
+     - The command you run and the processes it starts,
+       for that run only
+
+   * - Retyping
+     - None once you connect the plug
+     - Every run
+
+   * - Suits
+     - An SDK you use repeatedly
+     - A one-off command that you run yourself
+
+
+.. warning::
+
+   Don't put a secret in the workshop definition, its actions,
+   project files, or shell profiles.
+   These are plain files:
+   the project directory, definition included,
+   is visible inside the workshop and often ends up in version control,
+   and a shell profile exports its variables to every command you run.
 
 
 Use a secret from the host keyring
@@ -150,7 +160,7 @@ Use only these keys in the slot:
   which is the Login keyring in GNOME Keyring.
   Any other value is matched against collection labels.
 
-Apply the definition with :command:`workshop launch` for a new workshop,
+Apply the definition with :command:`workshop launch` for a new workshop,
 or refresh an existing one:
 
 .. code-block:: console
@@ -196,7 +206,7 @@ Confirm the connection in the connections listing:
      secret     <WORKSHOP>/<SDK>:<PLUG>  <WORKSHOP>/system:openai-key  manual
 
 
-The connection persists across :command:`workshop refresh`,
+The connection persists across :command:`workshop refresh`,
 including a refresh that changes the slot's attributes.
 To withdraw access, disconnect the plug:
 
@@ -244,22 +254,26 @@ Otherwise, the end of the error names the cause:
    * - Error ends with
      - Cause
      - Fix
+
    * - :samp:`secret provider is locked`
      - The keyring collection is locked.
      - Unlock the keyring in your desktop session,
        then run the command again.
+
    * - :samp:`secret not found`
      - No item in the collection carries all the slot's attributes.
      - Compare the slot with :command:`secret-tool lookup`
        using the same attributes,
        correct the slot's :samp:`attributes` or :samp:`collection`,
-       then run :command:`workshop refresh`;
+       then run :command:`workshop refresh`;
        the connection stays in place.
+
    * - :samp:`multiple secrets match the request`
      - Several items carry all the slot's attributes.
      - Add an attribute to the slot that only the intended item carries,
-       then run :command:`workshop refresh`,
+       then run :command:`workshop refresh`,
        or remove the other items from the keyring.
+
    * - :samp:`secret plug is not connected`
      - The plug isn't connected to the slot.
      - Connect it as described in :ref:`how_provide_secrets_connect`.
@@ -270,7 +284,7 @@ Pass a secret to a single command
 
 For a one-off command that you run yourself,
 pass the value as an environment variable
-of a single :command:`workshop exec` or :command:`workshop run` invocation
+of a single :command:`workshop exec` or :command:`workshop run` invocation
 with the :option:`!--env` flag.
 
 The safer form takes the value from your calling shell.
