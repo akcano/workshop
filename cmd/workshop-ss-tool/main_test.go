@@ -25,7 +25,7 @@ import (
 	"gopkg.in/check.v1"
 
 	"github.com/canonical/workshop/internal/secrets"
-	"github.com/canonical/workshop/internal/secrets/provider/system"
+	"github.com/canonical/workshop/internal/secrets/provider/secretservice"
 )
 
 // commandSuite tests workshop-ss-tool request handling and JSON responses.
@@ -46,9 +46,9 @@ func (s *commandSuite) TestRun(c *check.C) {
 
 	service := stubService(func(
 		_ context.Context,
-		request system.Request,
+		request secretservice.Request,
 	) (secrets.Secret, error) {
-		c.Check(request, check.DeepEquals, system.Request{
+		c.Check(request, check.DeepEquals, secretservice.Request{
 			Attributes: map[string]string{"app": "example"},
 			Collection: "default",
 			UID:        "1001",
@@ -56,7 +56,7 @@ func (s *commandSuite) TestRun(c *check.C) {
 		return value, nil
 	})
 
-	request := system.DelegatedDBusRequest{
+	request := secretservice.DelegatedDBusRequest{
 		Attributes: map[string]string{"app": "example"},
 		Collection: "default",
 	}
@@ -79,18 +79,18 @@ func (s *commandSuite) TestRunCancellation(c *check.C) {
 	cancel()
 	service := stubService(func(
 		gotContext context.Context,
-		_ system.Request,
+		_ secretservice.Request,
 	) (secrets.Secret, error) {
 		return secrets.Secret{}, gotContext.Err()
 	})
-	request := system.DelegatedDBusRequest{
+	request := secretservice.DelegatedDBusRequest{
 		Attributes: map[string]string{"app": "example"},
 		Collection: "default",
 	}
 
 	value, err := run(ctx, "1001", service, request)
 
-	c.Check(value, check.Equals, system.DelegatedDBusResponse{})
+	c.Check(value, check.Equals, secretservice.DelegatedDBusResponse{})
 	c.Check(errors.Is(err, context.Canceled), check.Equals, true)
 }
 
@@ -100,19 +100,19 @@ func (s *commandSuite) TestRunInvalidRequest(c *check.C) {
 	validationErr := errors.New("secret request collection is missing")
 	service := stubService(func(
 		_ context.Context,
-		request system.Request,
+		request secretservice.Request,
 	) (secrets.Secret, error) {
-		c.Check(request, check.DeepEquals, system.Request{UID: "1001"})
+		c.Check(request, check.DeepEquals, secretservice.Request{UID: "1001"})
 		return secrets.Secret{}, validationErr
 	})
 	value, err := run(
 		context.Background(),
 		"1001",
 		service,
-		system.DelegatedDBusRequest{},
+		secretservice.DelegatedDBusRequest{},
 	)
 
-	c.Check(value, check.Equals, system.DelegatedDBusResponse{})
+	c.Check(value, check.Equals, secretservice.DelegatedDBusResponse{})
 	c.Check(errors.Is(err, validationErr), check.Equals, true)
 }
 
@@ -122,11 +122,11 @@ func (s *commandSuite) TestRunServiceError(c *check.C) {
 	serviceErr := errors.New("service unavailable")
 	service := stubService(func(
 		context.Context,
-		system.Request,
+		secretservice.Request,
 	) (secrets.Secret, error) {
 		return secrets.Secret{}, serviceErr
 	})
-	request := system.DelegatedDBusRequest{
+	request := secretservice.DelegatedDBusRequest{
 		Attributes: map[string]string{"app": "example"},
 		Collection: "default",
 	}
@@ -134,74 +134,74 @@ func (s *commandSuite) TestRunServiceError(c *check.C) {
 	got, err := run(context.Background(), "1001", service, request)
 
 	c.Check(errors.Is(err, serviceErr), check.Equals, true)
-	c.Check(got, check.Equals, system.DelegatedDBusResponse{})
+	c.Check(got, check.Equals, secretservice.DelegatedDBusResponse{})
 }
 
 // TestMakeResponseFromErrorCollectionAmbiguous checks an ambiguous collection
 // becomes a canonical response error rather than a returned error.
 func (s *commandSuite) TestMakeResponseFromErrorCollectionAmbiguous(c *check.C) {
-	response, err := makeResponseFromError(system.ErrorCollectionAmbiguous)
+	response, err := makeResponseFromError(secretservice.ErrorCollectionAmbiguous)
 
 	c.Check(err, check.IsNil)
-	c.Check(response, check.Equals, system.DelegatedDBusResponse{
-		Error: system.ErrorCollectionAmbiguous.Error(),
+	c.Check(response, check.Equals, secretservice.DelegatedDBusResponse{
+		Error: secretservice.ErrorCollectionAmbiguous.Error(),
 	})
 }
 
 // TestMakeResponseFromErrorCollectionLocked checks a locked collection becomes
 // a canonical response error rather than a returned error.
 func (s *commandSuite) TestMakeResponseFromErrorCollectionLocked(c *check.C) {
-	response, err := makeResponseFromError(system.ErrorCollectionLocked)
+	response, err := makeResponseFromError(secretservice.ErrorCollectionLocked)
 
 	c.Check(err, check.IsNil)
-	c.Check(response, check.Equals, system.DelegatedDBusResponse{
-		Error: system.ErrorCollectionLocked.Error(),
+	c.Check(response, check.Equals, secretservice.DelegatedDBusResponse{
+		Error: secretservice.ErrorCollectionLocked.Error(),
 	})
 }
 
 // TestMakeResponseFromErrorCollectionNotFound checks a missing collection
 // becomes a canonical response error rather than a returned error.
 func (s *commandSuite) TestMakeResponseFromErrorCollectionNotFound(c *check.C) {
-	response, err := makeResponseFromError(system.ErrorCollectionNotFound)
+	response, err := makeResponseFromError(secretservice.ErrorCollectionNotFound)
 
 	c.Check(err, check.IsNil)
-	c.Check(response, check.Equals, system.DelegatedDBusResponse{
-		Error: system.ErrorCollectionNotFound.Error(),
+	c.Check(response, check.Equals, secretservice.DelegatedDBusResponse{
+		Error: secretservice.ErrorCollectionNotFound.Error(),
 	})
 }
 
 // TestMakeResponseFromErrorMultipleSecrets checks ambiguous secret matches
 // become a canonical response error rather than a returned error.
 func (s *commandSuite) TestMakeResponseFromErrorMultipleSecrets(c *check.C) {
-	response, err := makeResponseFromError(system.ErrorMultipleSecrets)
+	response, err := makeResponseFromError(secretservice.ErrorMultipleSecrets)
 
 	c.Check(err, check.IsNil)
-	c.Check(response, check.Equals, system.DelegatedDBusResponse{
-		Error: system.ErrorMultipleSecrets.Error(),
+	c.Check(response, check.Equals, secretservice.DelegatedDBusResponse{
+		Error: secretservice.ErrorMultipleSecrets.Error(),
 	})
 }
 
 // TestMakeResponseFromErrorSecretNotFound checks a missing secret becomes a
 // canonical response error rather than a returned error.
 func (s *commandSuite) TestMakeResponseFromErrorSecretNotFound(c *check.C) {
-	response, err := makeResponseFromError(system.ErrorSecretNotFound)
+	response, err := makeResponseFromError(secretservice.ErrorSecretNotFound)
 
 	c.Check(err, check.IsNil)
-	c.Check(response, check.Equals, system.DelegatedDBusResponse{
-		Error: system.ErrorSecretNotFound.Error(),
+	c.Check(response, check.Equals, secretservice.DelegatedDBusResponse{
+		Error: secretservice.ErrorSecretNotFound.Error(),
 	})
 }
 
 // TestMakeResponseFromErrorWrapped checks a wrapped recognised error is
 // identified and its wrapping context is excluded from the response.
 func (s *commandSuite) TestMakeResponseFromErrorWrapped(c *check.C) {
-	lookupErr := fmt.Errorf("lookup: %w", system.ErrorSecretNotFound)
+	lookupErr := fmt.Errorf("lookup: %w", secretservice.ErrorSecretNotFound)
 
 	response, err := makeResponseFromError(lookupErr)
 
 	c.Check(err, check.IsNil)
-	c.Check(response, check.Equals, system.DelegatedDBusResponse{
-		Error: system.ErrorSecretNotFound.Error(),
+	c.Check(response, check.Equals, secretservice.DelegatedDBusResponse{
+		Error: secretservice.ErrorSecretNotFound.Error(),
 	})
 }
 
@@ -210,11 +210,11 @@ func (s *commandSuite) TestMakeResponseFromErrorWrapped(c *check.C) {
 func (s *commandSuite) TestRunRecognisedError(c *check.C) {
 	service := stubService(func(
 		context.Context,
-		system.Request,
+		secretservice.Request,
 	) (secrets.Secret, error) {
-		return secrets.Secret{}, system.ErrorSecretNotFound
+		return secrets.Secret{}, secretservice.ErrorSecretNotFound
 	})
-	request := system.DelegatedDBusRequest{
+	request := secretservice.DelegatedDBusRequest{
 		Attributes: map[string]string{"app": "example"},
 		Collection: "default",
 	}
@@ -222,8 +222,8 @@ func (s *commandSuite) TestRunRecognisedError(c *check.C) {
 	response, err := run(context.Background(), "1001", service, request)
 
 	c.Check(err, check.IsNil)
-	c.Check(response, check.Equals, system.DelegatedDBusResponse{
-		Error: system.ErrorSecretNotFound.Error(),
+	c.Check(response, check.Equals, secretservice.DelegatedDBusResponse{
+		Error: secretservice.ErrorSecretNotFound.Error(),
 	})
 }
 
@@ -233,18 +233,18 @@ func (s *commandSuite) TestMakeResponseFromErrorNil(c *check.C) {
 	response, err := makeResponseFromError(nil)
 
 	c.Check(err, check.IsNil)
-	c.Check(response, check.Equals, system.DelegatedDBusResponse{})
+	c.Check(response, check.Equals, secretservice.DelegatedDBusResponse{})
 }
 
 // TestMakeResponseFromErrorUnknown checks an unrecognised error remains
 // identifiable with an empty response, even if its text matches a known error.
 func (s *commandSuite) TestMakeResponseFromErrorUnknown(c *check.C) {
-	unknown := errors.New(system.ErrorSecretNotFound.Error())
+	unknown := errors.New(secretservice.ErrorSecretNotFound.Error())
 
 	response, err := makeResponseFromError(unknown)
 
 	c.Check(errors.Is(err, unknown), check.Equals, true)
-	c.Check(response, check.Equals, system.DelegatedDBusResponse{})
+	c.Check(response, check.Equals, secretservice.DelegatedDBusResponse{})
 }
 
 // TestResponseErrorPartialWrite checks a partial error-response write returns
@@ -253,8 +253,8 @@ func (s *commandSuite) TestResponseErrorPartialWrite(c *check.C) {
 	writeErr := errors.New("output pipe closed")
 	output := &failingWriter{err: writeErr, limit: 5}
 
-	err := json.NewEncoder(output).Encode(system.DelegatedDBusResponse{
-		Error: system.ErrorSecretNotFound.Error(),
+	err := json.NewEncoder(output).Encode(secretservice.DelegatedDBusResponse{
+		Error: secretservice.ErrorSecretNotFound.Error(),
 	})
 
 	c.Check(errors.Is(err, writeErr), check.Equals, true)
@@ -268,8 +268,8 @@ func (s *commandSuite) TestResponseErrorWriteFailure(c *check.C) {
 	writeErr := errors.New("output pipe closed")
 	output := &failingWriter{err: writeErr, limit: 0}
 
-	err := json.NewEncoder(output).Encode(system.DelegatedDBusResponse{
-		Error: system.ErrorSecretNotFound.Error(),
+	err := json.NewEncoder(output).Encode(secretservice.DelegatedDBusResponse{
+		Error: secretservice.ErrorSecretNotFound.Error(),
 	})
 
 	c.Check(errors.Is(err, writeErr), check.Equals, true)
@@ -284,8 +284,8 @@ func (s *commandSuite) TestResponseSecretPartialWrite(c *check.C) {
 	writeErr := errors.New("output pipe closed")
 	output := &failingWriter{err: writeErr, limit: 5}
 
-	err := json.NewEncoder(output).Encode(system.DelegatedDBusResponse{
-		Secret: system.SecretResponseValue{Secret: value},
+	err := json.NewEncoder(output).Encode(secretservice.DelegatedDBusResponse{
+		Secret: secretservice.SecretResponseValue{Secret: value},
 	})
 
 	c.Check(errors.Is(err, writeErr), check.Equals, true)
@@ -305,8 +305,8 @@ func (s *commandSuite) TestResponseSecretWriteFailure(c *check.C) {
 	writeErr := errors.New("output pipe closed")
 	output := &failingWriter{err: writeErr, limit: 0}
 
-	err := json.NewEncoder(output).Encode(system.DelegatedDBusResponse{
-		Secret: system.SecretResponseValue{Secret: value},
+	err := json.NewEncoder(output).Encode(secretservice.DelegatedDBusResponse{
+		Secret: secretservice.SecretResponseValue{Secret: value},
 	})
 
 	c.Check(errors.Is(err, writeErr), check.Equals, true)

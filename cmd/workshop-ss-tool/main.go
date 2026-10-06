@@ -24,7 +24,7 @@ import (
 	"strconv"
 
 	"github.com/canonical/workshop/internal/secrets"
-	"github.com/canonical/workshop/internal/secrets/provider/system"
+	"github.com/canonical/workshop/internal/secrets/provider/secretservice"
 )
 
 // SecretService provides the host secret lookups required by the command.
@@ -32,7 +32,7 @@ type SecretService interface {
 	// Get retrieves the unique secret matching the request for its user ID.
 	// On success, ownership transfers to the caller, which must consume or
 	// close the secret. It must honour context cancellation.
-	Get(context.Context, system.Request) (secrets.Secret, error)
+	Get(context.Context, secretservice.Request) (secrets.Secret, error)
 }
 
 const (
@@ -41,35 +41,37 @@ const (
 )
 
 // makeResponseFromError converts recognised lookup errors, including wrapped
-// errors, into a [system.DelegatedDBusResponse] with the canonical error
+// errors, into a [secretservice.DelegatedDBusResponse] with the canonical error
 // message.
 // Recognised errors return a nil error; unrecognised errors are returned
 // unchanged with an empty response. A nil input returns an empty response and
 // a nil error.
-func makeResponseFromError(err error) (system.DelegatedDBusResponse, error) {
+func makeResponseFromError(
+	err error,
+) (secretservice.DelegatedDBusResponse, error) {
 	switch {
-	case errors.Is(err, system.ErrorCollectionAmbiguous):
-		return system.DelegatedDBusResponse{
-			Error: system.ErrorCollectionAmbiguous.Error(),
+	case errors.Is(err, secretservice.ErrorCollectionAmbiguous):
+		return secretservice.DelegatedDBusResponse{
+			Error: secretservice.ErrorCollectionAmbiguous.Error(),
 		}, nil
-	case errors.Is(err, system.ErrorCollectionLocked):
-		return system.DelegatedDBusResponse{
-			Error: system.ErrorCollectionLocked.Error(),
+	case errors.Is(err, secretservice.ErrorCollectionLocked):
+		return secretservice.DelegatedDBusResponse{
+			Error: secretservice.ErrorCollectionLocked.Error(),
 		}, nil
-	case errors.Is(err, system.ErrorCollectionNotFound):
-		return system.DelegatedDBusResponse{
-			Error: system.ErrorCollectionNotFound.Error(),
+	case errors.Is(err, secretservice.ErrorCollectionNotFound):
+		return secretservice.DelegatedDBusResponse{
+			Error: secretservice.ErrorCollectionNotFound.Error(),
 		}, nil
-	case errors.Is(err, system.ErrorMultipleSecrets):
-		return system.DelegatedDBusResponse{
-			Error: system.ErrorMultipleSecrets.Error(),
+	case errors.Is(err, secretservice.ErrorMultipleSecrets):
+		return secretservice.DelegatedDBusResponse{
+			Error: secretservice.ErrorMultipleSecrets.Error(),
 		}, nil
-	case errors.Is(err, system.ErrorSecretNotFound):
-		return system.DelegatedDBusResponse{
-			Error: system.ErrorSecretNotFound.Error(),
+	case errors.Is(err, secretservice.ErrorSecretNotFound):
+		return secretservice.DelegatedDBusResponse{
+			Error: secretservice.ErrorSecretNotFound.Error(),
 		}, nil
 	default:
-		return system.DelegatedDBusResponse{}, err
+		return secretservice.DelegatedDBusResponse{}, err
 	}
 }
 
@@ -77,7 +79,7 @@ func main() {
 	decoder := json.NewDecoder(os.Stdin)
 	decoder.DisallowUnknownFields()
 
-	var request system.DelegatedDBusRequest
+	var request secretservice.DelegatedDBusRequest
 	err := decoder.Decode(&request)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "decoding secret request: %v\n", err)
@@ -89,7 +91,7 @@ func main() {
 	res, err := run(
 		ctx,
 		strconv.Itoa(os.Geteuid()),
-		system.NewDBusService(),
+		secretservice.NewDBusClient(),
 		request,
 	)
 	ctxStop()
@@ -108,8 +110,8 @@ func main() {
 }
 
 // run resolves request for the supplied effective user ID and returns a
-// [system.DelegatedDBusResponse]. A successful lookup transfers ownership of
-// the response's secret to the caller, which must consume or close it.
+// [secretservice.DelegatedDBusResponse]. A successful lookup transfers ownership
+// of the response's secret to the caller, which must consume or close it.
 // Recognised lookup errors populate the response's Error field and return a
 // nil error. Unrecognised service errors are returned unchanged with an empty
 // response.
@@ -117,9 +119,9 @@ func run(
 	ctx context.Context,
 	uid string,
 	service SecretService,
-	request system.DelegatedDBusRequest,
-) (system.DelegatedDBusResponse, error) {
-	secretVal, err := service.Get(ctx, system.Request{
+	request secretservice.DelegatedDBusRequest,
+) (secretservice.DelegatedDBusResponse, error) {
+	secretVal, err := service.Get(ctx, secretservice.Request{
 		Attributes: request.Attributes,
 		Collection: request.Collection,
 		UID:        uid,
@@ -129,7 +131,7 @@ func run(
 		return makeResponseFromError(err)
 	}
 
-	return system.DelegatedDBusResponse{
-		Secret: system.SecretResponseValue{Secret: secretVal},
+	return secretservice.DelegatedDBusResponse{
+		Secret: secretservice.SecretResponseValue{Secret: secretVal},
 	}, nil
 }
