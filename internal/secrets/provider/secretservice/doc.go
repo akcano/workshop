@@ -12,6 +12,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-// Package secret retrieves secrets from the host Secret Service for the system
-// SDK.
-package secret
+// Package secretservice provides a freedesktop Secret Service provider for
+// system SDK secret slots, using D-Bus directly or a user-scoped command.
+package secretservice

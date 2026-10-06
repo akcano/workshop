@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-package secret
+package secretservice
 
 import (
 	"context"
@@ -23,10 +23,10 @@ import (
 	"gopkg.in/check.v1"
 )
 
-// dbusServiceSuite tests secret retrieval through [DBusService].
-type dbusServiceSuite struct{}
+// dbusClientSuite tests secret retrieval through [DBusClient].
+type dbusClientSuite struct{}
 
-var _ = check.Suite(&dbusServiceSuite{})
+var _ = check.Suite(&dbusClientSuite{})
 
 func Test(t *testing.T) {
 	check.TestingT(t)
@@ -34,16 +34,16 @@ func Test(t *testing.T) {
 
 // TestConnectUserSessionBusRejectsInvalidUID checks malformed user IDs fail
 // before a D-Bus connection is attempted.
-func (s *dbusServiceSuite) TestConnectUserSessionBusRejectsInvalidUID(c *check.C) {
+func (s *dbusClientSuite) TestConnectUserSessionBusRejectsInvalidUID(c *check.C) {
 	_, err := connectUserSessionBus(context.Background(), "not-a-uid")
 
 	c.Check(err, check.ErrorMatches,
 		`parsing user ID "not-a-uid": strconv.ParseUint:.*`)
 }
 
-// TestGet checks that the service performs a complete lookup and transfers
+// TestGet checks that the client performs a complete lookup and transfers
 // ownership of the returned value to the caller.
-func (s *dbusServiceSuite) TestGet(c *check.C) {
+func (s *dbusClientSuite) TestGet(c *check.C) {
 	calls := make([]string, 0, 6)
 	conn := &fakeBusConnection{}
 	conn.call = func(
@@ -88,7 +88,7 @@ func (s *dbusServiceSuite) TestGet(c *check.C) {
 		return nil
 	}
 
-	service := DBusService{
+	client := DBusClient{
 		connect: func(
 			_ context.Context,
 			uid string,
@@ -103,7 +103,7 @@ func (s *dbusServiceSuite) TestGet(c *check.C) {
 		UID:        "1000",
 	}
 
-	value, err := service.Get(context.Background(), request)
+	value, err := client.Get(context.Background(), request)
 	c.Assert(err, check.IsNil)
 	defer value.Close()
 
@@ -123,8 +123,8 @@ func (s *dbusServiceSuite) TestGet(c *check.C) {
 
 // TestGetRejectsInvalidRequest checks Get validates the request before
 // attempting to connect to the user's session bus.
-func (s *dbusServiceSuite) TestGetRejectsInvalidRequest(c *check.C) {
-	service := DBusService{
+func (s *dbusClientSuite) TestGetRejectsInvalidRequest(c *check.C) {
+	client := DBusClient{
 		connect: func(
 			context.Context,
 			string,
@@ -138,7 +138,7 @@ func (s *dbusServiceSuite) TestGetRejectsInvalidRequest(c *check.C) {
 		UID:        "1000",
 	}
 
-	_, err := service.Get(context.Background(), request)
+	_, err := client.Get(context.Background(), request)
 
 	c.Check(err, check.ErrorMatches, "secret request collection is missing")
 }

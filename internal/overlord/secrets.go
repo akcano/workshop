@@ -16,16 +16,22 @@ package overlord
 
 import (
 	"github.com/canonical/workshop/internal/sdk"
-	"github.com/canonical/workshop/internal/sdk/system"
 	"github.com/canonical/workshop/internal/secrets"
+	"github.com/canonical/workshop/internal/secrets/provider/secretservice"
 )
 
 // makeSecretResolver builds the resolver with the built-in secret providers.
-func makeSecretResolver(repo system.SlotRepository) secrets.Resolver {
-	slots := system.NewRepositorySecretSlotLookup(repo)
-	provider := system.NewSecretProvider(slots)
+func makeSecretResolver(
+	repo secretservice.SlotRepository,
+) (secrets.Resolver, error) {
+	service, err := secretservice.MakeSecretService()
+	if err != nil {
+		return secrets.Resolver{}, err
+	}
+	slots := secretservice.NewRepositorySecretSlotLookup(repo)
+	provider := secretservice.NewSecretProvider(slots, service)
 
 	return secrets.NewResolver(map[string]secrets.Provider{
 		sdk.System.String(): provider,
-	})
+	}), nil
 }

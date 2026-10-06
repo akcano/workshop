@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-package secret
+package secretservice
 
 import (
 	"context"
@@ -27,13 +27,13 @@ import (
 	"github.com/canonical/workshop/internal/secrets"
 )
 
-// DBusService retrieves secrets through the freedesktop Secret Service D-Bus
+// DBusClient retrieves secrets through the freedesktop Secret Service D-Bus
 // API.
-type DBusService struct {
+type DBusClient struct {
 	connect busConnector
 }
 
-// busConnection provides the D-Bus operations required by [DBusService].
+// busConnection provides the D-Bus operations required by [DBusClient].
 type busConnection interface {
 	// Call invokes a method and stores its reply body in the supplied results.
 	Call(
@@ -114,7 +114,7 @@ func (c dbusConnection) Close() error {
 //   - [ErrorCollectionNotFound]: no collection has the requested name.
 //   - [ErrorMultipleSecrets]: several secrets match the supplied attributes.
 //   - [ErrorSecretNotFound]: no secret matches the supplied attributes.
-func (s DBusService) Get(
+func (s DBusClient) Get(
 	ctx context.Context,
 	req Request,
 ) (secrets.Secret, error) {
@@ -201,10 +201,10 @@ func (s DBusService) Get(
 	return secrets.NewSecret(value), nil
 }
 
-// NewDBusService creates a service that connects to each requesting user's
+// NewDBusClient creates a client that connects to each requesting user's
 // session bus.
-func NewDBusService() DBusService {
-	return DBusService{connect: connectUserSessionBus}
+func NewDBusClient() DBusClient {
+	return DBusClient{connect: connectUserSessionBus}
 }
 
 // closeDBUSSession releases the Secret Service session created by [openSession]
