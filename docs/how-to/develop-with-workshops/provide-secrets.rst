@@ -66,8 +66,7 @@ Before starting, ensure you have these requirements satisfied:
 - A desktop session that runs a keyring service
   implementing the freedesktop.org Secret Service,
   such as GNOME Keyring.
-  |ws_markup| looks the secret up through your D-Bus session bus,
-  so the keyring service must be running in your desktop session.
+  |ws_markup| looks the secret up through that session's D-Bus session bus.
 - The :program:`secret-tool` utility,
   shipped in the :samp:`libsecret-tools` package on Ubuntu,
   to store and check keyring items.
@@ -211,8 +210,8 @@ Use the secret
 
 Run the SDK's commands as usual.
 The SDK asks for the secret at the moment it needs the value,
-and |ws_markup| looks it up in the host keyring for each request,
-so |ws_markup| doesn't copy the value into the workshop.
+and |ws_markup| looks it up in the host keyring for each request
+instead of copying the value into the workshop.
 While the plug stays connected,
 any command in the workshop can request the value the same way.
 
