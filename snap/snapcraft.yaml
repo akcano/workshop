@@ -66,6 +66,7 @@ parts:
       fi
       CGO_ENABLED=0 go build -o "${CRAFT_PART_INSTALL}/bin/workshop" ./cmd/workshop
       CGO_ENABLED=1 go build -o "${CRAFT_PART_INSTALL}/bin/workshopd" ./cmd/workshopd
+      CGO_ENABLED=0 go build -o "${CRAFT_PART_INSTALL}/bin/workshop-ss-tool" ./cmd/workshop-ss-tool
       CGO_ENABLED=0 go build -o "${CRAFT_PART_INSTALL}/lib/workshop/guest/workshopctl" ./cmd/workshopctl
       CGO_ENABLED=0 go build -o "${CRAFT_PART_INSTALL}/bin/sdk" ./cmd/sdk
 
@@ -81,6 +82,7 @@ parts:
     prime:
       - bin/workshop
       - bin/workshopd
+      - bin/workshop-ss-tool
       - lib/workshop/guest/workshopctl
       - bin/sdk
   zstd:
