@@ -39,7 +39,7 @@ Choose how the SDK receives the value by what consumes it:
      - systemd fetches the value on every start
        and gives the service a private file
    * - A value the user picks for a single run
-     - Nothing in the SDK
+     - Nothing the SDK depends on
      - Users pass it with :option:`!--env` themselves;
        the SDK must work without it
 
@@ -103,8 +103,16 @@ Build the SDK into the try area:
    $ sdkcraft try
 
 
-Then add it to a test workshop
-next to a :samp:`system` slot for a credential in your keyring:
+Store a test credential in your host keyring
+under the attributes that the test slot below uses:
+
+.. code-block:: console
+
+   $ secret-tool store --label="secret-demo test key" --collection=default service secret-demo account test
+
+
+Then add the SDK to a test workshop
+next to a :samp:`system` slot that points at that credential:
 
 .. code-block:: yaml
    :caption: workshop.yaml
@@ -120,8 +128,6 @@ next to a :samp:`system` slot for a credential in your keyring:
              service: secret-demo
              account: test
      - name: try-secret-demo
-   actions:
-     demo: secret-demo
 
 
 Launch the workshop.
@@ -240,8 +246,8 @@ Receive the secret in a service
 
 For a long-running service,
 let systemd request the secret when the service starts.
-Install the unit as a system unit from the :samp:`setup-base` hook,
-which runs as :samp:`root`
+In the same :samp:`setup-base` hook, install the service as a system unit;
+the hook runs as :samp:`root`
 and has :envvar:`$SDK_SYSTEMD_SECRET_SOCKET` set
 to the workshop's secret socket.
 Run the service itself as the :samp:`workshop` user,
@@ -281,7 +287,7 @@ and stops with a clear message when the file is missing or empty;
    # Reads the API key from a systemd credential, then runs the service.
    key_file="$CREDENTIALS_DIRECTORY/secret-demo.api-key"
    if [[ ! -s "$key_file" ]]; then
-     echo "secret-demo-service: no API key; connect secret-demo:api-key, then restart secret-demo.service" >&2
+     echo "secret-demo-service: cannot read the API key; check that secret-demo:api-key is connected and that its slot matches one unlocked keyring item, then restart secret-demo.service" >&2
      exit 1
    fi
    echo "secret-demo-service: started with a $(wc -c <"$key_file")-character key"
@@ -319,7 +325,7 @@ shows why:
      error: cannot get credential "secret-demo.api-key": checking secret retrieval change <ID>: cannot perform the following tasks:
      - Retrieve secret "dev/secret-demo:api-key" (... retrieving system secret: secret provider is locked)
      ...
-     secret-demo-service: no API key; connect secret-demo:api-key, then restart secret-demo.service
+     secret-demo-service: cannot read the API key; check that secret-demo:api-key is connected and that its slot matches one unlocked keyring item, then restart secret-demo.service
      secret-demo.service: Main process exited, code=exited, status=1/FAILURE
 
 
@@ -335,11 +341,11 @@ is skipped without an error.
 
 The SDK must not depend on this path.
 The wrapper above lets a value from the environment take precedence,
-and falls back to the plug when the variable is absent:
+and falls back to the plug when the variable is absent,
+so an inherited name that isn't set doesn't break it:
 
 .. code-block:: console
 
-   $ workshop exec --env SECRET_DEMO_API_KEY=<VALUE> dev -- secret-demo
    $ unset SECRET_DEMO_API_KEY
    $ workshop exec --env SECRET_DEMO_API_KEY dev -- secret-demo
 
