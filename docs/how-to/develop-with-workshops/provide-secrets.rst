@@ -16,8 +16,8 @@ How to provide secrets to a workshop
 Some SDKs need a credential at runtime,
 such as an API key for an AI coding agent.
 |ws_markup| can deliver that credential to the workshop
-without the value ever landing in the workshop definition,
-the project directory, or your shell history.
+without writing the value into the workshop definition
+or the project directory.
 There are two ways to do it,
 so pick one before you start:
 
@@ -66,12 +66,16 @@ Before starting, ensure you have these requirements satisfied:
 - A desktop session that runs a keyring service
   implementing the freedesktop.org Secret Service,
   such as GNOME Keyring.
-  |ws_markup| looks the secret up through the D-Bus session bus
-  of the user who runs the workshop command,
-  so the keyring service must be running in that session.
+  |ws_markup| looks the secret up through your D-Bus session bus,
+  so the keyring service must be running in your desktop session.
 - The :program:`secret-tool` utility,
   shipped in the :samp:`libsecret-tools` package on Ubuntu,
   to store and check keyring items.
+- A credential stored in the host keyring under attributes that identify it,
+  in the collection the lookup searches:
+  the keyring's default collection, unless the slot names another.
+  The keyring must be unlocked whenever the value is requested.
+  :ref:`how_provide_secrets_store` shows how to store the credential.
 - A workshop definition that includes an SDK declaring a :samp:`secret` plug.
   The SDK's documentation names the plug
   and the credential it expects.
@@ -82,8 +86,10 @@ Use a secret from the host keyring
 
 The host keyring holds the value;
 the workshop definition only says where to find it,
-and you decide which SDK may ask for it.
+and connecting a plug decides whether the workshop can ask for it.
 
+
+.. _how_provide_secrets_store:
 
 Store the credential
 ~~~~~~~~~~~~~~~~~~~~
@@ -135,19 +141,15 @@ The slot carries lookup attributes only, never the value:
      - name: <SDK>
 
 
-The slot accepts two keys:
+Use only these keys in the slot:
 
-- :samp:`attributes` is required
-  and holds at least one attribute with a string value.
+- :samp:`attributes` holds at least one attribute with a string value.
   The lookup matches an item that carries all of them.
-- :samp:`collection` is optional and selects the keyring collection to search.
+- :samp:`collection` optionally selects the keyring collection to search.
   Without it, the lookup searches the collection
   that the keyring's :samp:`default` alias points to,
   which is the Login keyring in GNOME Keyring.
   Any other value is matched against collection labels.
-
-Only the :samp:`system` SDK can declare a :samp:`secret` slot,
-and |ws_markup| refuses a slot with any other key.
 
 Apply the definition with :command:`workshop launch` for a new workshop,
 or refresh an existing one:
@@ -162,9 +164,9 @@ or refresh an existing one:
 Connect the plug
 ~~~~~~~~~~~~~~~~
 
-|ws_markup| never connects a :samp:`secret` plug on its own,
-so after a launch or a refresh
-the plug and the slot remain unconnected:
+|ws_markup| never connects a :samp:`secret` plug on its own:
+after you add the slot and launch or refresh,
+the plug and the slot stay unconnected until you connect them:
 
 .. code-block:: console
 
@@ -210,7 +212,7 @@ Use the secret
 Run the SDK's commands as usual.
 The SDK asks for the secret at the moment it needs the value,
 and |ws_markup| looks it up in the host keyring for each request,
-so the workshop never stores the value.
+so |ws_markup| doesn't copy the value into the workshop.
 While the plug stays connected,
 any command in the workshop can request the value the same way.
 
@@ -233,7 +235,8 @@ so that only an error reaches your terminal:
      - Retrieve secret "<WORKSHOP>/<SDK>:<PLUG>" (... retrieving system secret: secret provider is locked)
 
 
-The end of the error names the cause:
+No output means the lookup succeeded.
+Otherwise, the end of the error names the cause:
 
 .. list-table::
    :header-rows: 1
