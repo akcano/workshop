@@ -52,6 +52,6 @@ if err != nil {
 
 ## Gold Standard Examples
 
-- Error handling: [`client/client.go`](../client/client.go) lines 50-80
-- Interface implementation: [`internal/workshop/workshop.go`](../internal/workshop/workshop.go)
-- CLI command structure: [`cmd/workshop/launch.go`](../cmd/workshop/launch.go)
+- Error handling: [`client/client.go`](../../client/client.go) lines 50-80
+- Interface implementation: [`internal/workshop/workshop.go`](../../internal/workshop/workshop.go)
+- CLI command structure: [`cmd/workshop/launch.go`](../../cmd/workshop/launch.go)
