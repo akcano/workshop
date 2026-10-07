@@ -203,5 +203,5 @@ func (s *workshopctlSuite) TestWorkshopctlGetSecretSystemd(c *check.C) {
 	c.Check(stderr.String(), check.Equals,
 		"processed systemd load credential request for unit "+
 			"\"ollama.service\", \"ollama\" SDK and secret "+
-			"\"ollama-api-key\"test stderr")
+			"\"ollama-api-key\"\ntest stderr")
 }

@@ -92,7 +92,7 @@ func interceptGetSecret(
 
 	fmt.Fprintf(
 		stderr,
-		"processed systemd load credential request for unit %q, %q SDK and secret %q",
+		"processed systemd load credential request for unit %q, %q SDK and secret %q\n",
 		systemdSecretReq.Unit,
 		systemdSecretReq.SDK,
 		systemdSecretReq.Secret,
