@@ -7,7 +7,7 @@ description: Documentation file conventions for Workshop.
 
 ## Primary Reference
 
-**Always consult**: [`docs/doc-style-guide.md`](../docs/doc-style-guide.md) (1138 lines, comprehensive)
+**Always consult**: [`docs/doc-style-guide.md`](../../docs/doc-style-guide.md) (1138 lines, comprehensive)
 
 ## Quick Checks (Top Issues)
 
@@ -54,6 +54,6 @@ then ensure it runs.
 
 ## Gold Standard Examples
 
-- Tutorial: [`docs/tutorial/part-1-get-started.rst`](../docs/tutorial/part-1-get-started.rst)
-- Explanation: [`docs/explanation/index.rst`](../docs/explanation/index.rst)
-- Reference: [`docs/reference/cli/workshop-launch.rst`](../docs/reference/cli/workshop-launch.rst)
+- Tutorial: [`docs/tutorial/part-1-get-started.rst`](../../docs/tutorial/part-1-get-started.rst)
+- Explanation: [`docs/explanation/index.rst`](../../docs/explanation/index.rst)
+- Reference: [`docs/reference/cli/workshop-launch.rst`](../../docs/reference/cli/workshop-launch.rst)
