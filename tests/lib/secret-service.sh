@@ -12,7 +12,8 @@
 # install_secret_service installs the packages required to run a host Secret
 # Service on the user's session bus.
 function install_secret_service() {
-    apt-get install -y --no-install-recommends gnome-keyring libsecret-tools
+    apt-get install -y --no-install-recommends \
+        gnome-keyring libsecret-tools python3-secretstorage
 }
 
 # secret_service_env runs a command as the host user with the session bus
@@ -51,6 +52,23 @@ function start_secret_service() {
     # registers as org.freedesktop.secrets on the session bus and persists.
     printf '%s\n' workshop |
         secret_service_env gnome-keyring-daemon --unlock --components=secrets
+}
+
+# select_default_collection relabels the Secret Service default collection to
+# name. The collection remains the default, so it is found through the
+# "default" alias, but it no longer shares the provider's fallback name. This
+# lets tests prove that a slot which omits its collection resolves through the
+# alias rather than by a label lookup.
+function select_default_collection() {
+    local name="$1"
+    secret_service_env python3 -c '
+import secretstorage
+import sys
+
+connection = secretstorage.dbus_init()
+collection = secretstorage.get_default_collection(connection)
+collection.set_label(sys.argv[1])
+' "$name"
 }
 
 # store_secret stores value in the host user's keyring using the supplied
