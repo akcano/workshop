@@ -57,7 +57,7 @@ func (s *apiSuite) TestWorkshopCtlErrorExitCode(c *check.C) {
 		Message: "unlock the secret provider and try again",
 		Value: map[string]any{
 			"exit-code": 2,
-			"stderr":    "unlock the secret provider and try again",
+			"stderr":    "unlock the secret provider and try again\n",
 		},
 	})
 }
@@ -78,7 +78,7 @@ func (s *apiSuite) TestWorkshopCtlErrorZeroExitCode(c *check.C) {
 		Message: "optional value unavailable",
 		Value: map[string]any{
 			"exit-code": 0,
-			"stderr":    "optional value unavailable",
+			"stderr":    "optional value unavailable\n",
 		},
 	})
 }

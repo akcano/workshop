@@ -91,8 +91,8 @@ func v1PostWorkshopCtl(c *Command, r *http.Request, _ *userState) Response {
 }
 
 // workshopctlErrorResponse includes a command's requested exit code and
-// verbatim stderr diagnostic when exit-code metadata is available. Other
-// errors retain the generic bad-request response.
+// newline-terminated stderr diagnostic when exit-code metadata is available.
+// Other errors retain the generic bad-request response.
 func workshopctlErrorResponse(err error) Response {
 	exitError, ok := errors.AsType[ctlcmd.CommandExitCodeError](err)
 	if !ok {
@@ -103,7 +103,7 @@ func workshopctlErrorResponse(err error) Response {
 			Message: err.Error(),
 			Value: map[string]any{
 				"exit-code": exitError.ExitCode,
-				"stderr":    err.Error(),
+				"stderr":    err.Error() + "\n",
 			},
 		},
 		Status: http.StatusBadRequest,
