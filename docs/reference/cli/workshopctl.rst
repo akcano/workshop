@@ -78,6 +78,49 @@ Read a secret into an environment variable in a wrapper script:
    connection.
    Not intended for interactive use.
 
+.. rubric:: Exit codes
+
+The command exits with a code describing the retrieval outcome. SDK
+wrappers can rely on these codes to react to specific failures.
+
+.. list-table::
+   :header-rows: 1
+   :width: 95
+   :widths: 2 1 1
+
+   * - Outcome
+     - Ordinary
+     - Systemd
+
+   * - Success
+     - 0
+     - 0
+
+   * - Secret not found
+     - 1
+     - 1
+
+   * - Provider locked
+     - 2
+     - 2
+
+   * - Plug not connected
+     - 3
+     - 0
+
+   * - Multiple matching secrets
+     - 4
+     - 4
+
+   * - Other retrieval failure
+     - 255
+     - 255
+
+With :samp:`--systemd`, an unconnected plug is not a failure: the command
+exits successfully with an empty credential and writes a diagnostic to
+standard error, so the requesting unit can start without the secret.
+Other outcomes use the same code as an ordinary invocation.
+
 
 workshopctl set-health
 ----------------------
