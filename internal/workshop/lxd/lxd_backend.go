@@ -27,16 +27,13 @@ import (
 	"os"
 	"os/user"
 	"path"
-	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
-	"text/template"
 	"time"
 
 	lxd "github.com/canonical/lxd/client"
 	"github.com/canonical/lxd/shared/api"
-	"github.com/canonical/x-go/strutil/shlex"
 	"golang.org/x/sys/unix"
 	"gopkg.in/yaml.v3"
 
@@ -1356,172 +1353,21 @@ func proxyToLxdDevice(usr *user.User, proxy workshop.ProxyEntry) map[string]stri
 	return device
 }
 
-func (s *Backend) workshopConfig(projectId string, userid, groupid string, file *workshop.File, format sdk.Revision, baseFingerprint string) (map[string]string, error) {
-	cloudConfigTemplate := `
-#cloud-config
-users:
-  - default
-  - name: workshop
-    primary_group: workshop
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    shell: /bin/bash
-    create_groups: false
-    groups:
-    - 'adm'
-    - 'cdrom'
-    - 'sudo'
-    - 'dip'
-    - 'plugdev'
-    - 'audio'
-    - 'netdev'
-    - 'lxd'
-    - 'video'
-    - 'render'
-    # Compatibility GIDs for various host systems:
-    - '108' # netdev on 26.04
-    - '111' # netdev on 24.04
-    - '118' # netdev on 20.04
-    - '119' # netdev on 22.04
-    - '109' # render on 20.04
-    - '110' # render on 22.04
-    - '990' # render on 26.04
-    - '992' # render on 24.04
-bootcmd:
-- |
-  set -e
-  maybe_groupadd() {
-      # Ignore GID not unique (exit code 4) or group name not unique (exit code 9)
-      groupadd -g "$1" -r "$2" || case $? in 4|9) ;; *) return $? ;; esac
-  }
-  maybe_groupadd 1000 workshop
-  maybe_groupadd 108 netdev-compat-108
-  maybe_groupadd 111 netdev-compat-111
-  maybe_groupadd 118 netdev-compat-118
-  maybe_groupadd 119 netdev-compat-119
-  maybe_groupadd 109 render-compat-109
-  maybe_groupadd 110 render-compat-110
-  maybe_groupadd 990 render-compat-990
-  maybe_groupadd 992 render-compat-992
-- chmod 0600 /etc/ssh/ssh_host_ed25519_key
-# LXD containers use /dev/urandom from the host and VMs use virtio-rng.
-- install -D --mode=0644 /dev/null /var/cache/pollinate/seeded
-apt:
-  conf: |
-    # Installed by workshop
-
-    # Don't automatically install recommended packages
-    APT::Install-Recommends "0";
-
-    # Don't automatically install suggested packages
-    APT::Install-Suggests "0";
-
-    # Bypass confirmation prompts
-    APT::Get::Assume-Yes "1";
-grub_dpkg:
-  enabled: false
-ssh_deletekeys: false
-ssh_genkeytypes: [ed25519]
-write_files:
-  - path: /etc/cloud/cloud-init.disabled
-    defer: true
-  # Workaround https://bugs.launchpad.net/snapd/+bug/2165972. Without network
-  # access snapd retries certain HTTP requests a few times before timing out.
-  - path: /etc/systemd/system/snapd.service.d/70-snapd-after-network.conf
-    content: |
-      [Unit]
-      After=network.target
-  - path: /etc/ssh/sshd_config.d/90-workshop.conf
-    content: |
-      HostCertificate /etc/ssh/ssh_host_ed25519_key-cert.pub
-      TrustedUserCAKeys /etc/ssh/ssh_ca_ed25519_key.pub
-  # Workaround https://github.com/canonical/lxd/issues/19055. We handle the
-  # initial permissions in bootcmd, but subsequent boots from a VM snapshot
-  # can reset the permissions back to 0644.
-  - path: /etc/systemd/system/ssh.service.d/70-workshop.conf
-    content: |
-      [Service]
-      ExecStartPre=
-      ExecStartPre=/usr/bin/chmod 0600 /etc/ssh/ssh_host_ed25519_key
-      ExecStartPre=/usr/sbin/sshd -t
-  - path: /etc/systemd/system/workshop-waitready.service
-    content: |
-      [Unit]
-      Description=Signal workshop readiness to LXD
-      After=dbus.socket
-      Requires=dbus.socket
-
-      [Service]
-      Type=notify
-      ExecStart=/usr/local/lib/workshop/waitready
-      Environment=WORKSHOP_WAITREADY_TIMEOUT_NS={{.StartTimeout}}
-      Restart=on-failure
-      RestartSec=2s
-
-      [Install]
-      WantedBy=multi-user.target
-{{- if .HasGRUB}}
-  - path: /boot/grub/custom.cfg
-    content: |
-      # Extract SMBIOS UUID and store it in a GRUB variable. We use it to set
-      # the systemd.machine_id kernel parameter to the LXD UUID, which forces
-      # systemd to use it. By default it prefers reading the machine ID from
-      # /etc/machine-id, which may be stale when restoring from a snapshot.
-      insmod smbios
-      smbios --type 1 --get-uuid 8 --set workshop_machine_id
-      export workshop_machine_id
-  - path: /etc/default/grub.d/70-workshop.cfg
-    content: |
-      GRUB_CMDLINE_LINUX="${GRUB_CMDLINE_LINUX:+$GRUB_CMDLINE_LINUX }"'systemd.machine_id=${workshop_machine_id}'
-      GRUB_CMDLINE_LINUX_DEFAULT="${GRUB_CMDLINE_LINUX_DEFAULT:+$GRUB_CMDLINE_LINUX_DEFAULT }quiet"
-{{- end}}
-runcmd:
-  # Project directory is required for 'workshop exec'.
-  - install --directory --mode=755 /project /usr/local/bin /usr/local/lib/workshop {{shquote .WorkshopStateDir}}
-  # Create XDG base directories so SDKs don't need an extra mode=700 step.
-  - install --directory --mode=700 --owner=workshop --group=workshop /home/workshop/.cache /home/workshop/.config /home/workshop/.local
-  # Create ~/.local/bin so SDKs don't need to source ~/.profile to add it to the PATH.
-  - install --directory --mode=755 --owner=workshop --group=workshop /home/workshop/.local/bin
-  # Put workshopctl on the PATH.
-  - ln -sf {{shquote .WorkshopCtlPath}} /usr/local/bin/workshopctl
-  - ln -sf ../../bin/workshopctl /usr/local/lib/workshop/waitready
-{{- if ne .FsFreezePath ""}}
-  - ln -sf ../../bin/workshopctl {{shquote .FsFreezePath}}
-{{- end}}
-  - systemctl enable --now workshop-waitready.service
-  # Linger starts the user manager for the specified user on boot, which then creates /run/user/$UID,
-  # sets $XDG_RUNTIME_DIR and more. Interfaces such as desktop rely on both of these to be present.
-  # This does not introduce any additional modification beyond what a login session would normally create.
-  - loginctl enable-linger workshop
-{{- if .HasGRUB}}
-  - update-grub
-{{- end}}
-`[1:]
+func (s *Backend) workshopConfig(
+	projectId string,
+	userid, groupid string,
+	file *workshop.File,
+	format sdk.Revision,
+	baseFingerprint string,
+) (map[string]string, error) {
+	t, err := cloudConfigTemplate()
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse cloud-config template: %w", err)
+	}
 
 	var cloudConfig strings.Builder
-	funcs := map[string]any{
-		"shquote": shlex.Quote,
-	}
-	var fsFreezePath string
-	startTimeout := startTimeoutContainer
-	if file.Runtime != workshop.RuntimeLXDContainer {
-		fsFreezePath = dirs.FsFreezePath
-		startTimeout = startTimeoutVM
-	}
-	dot := struct {
-		FsFreezePath     string
-		HasGRUB          bool
-		StartTimeout     int64
-		WorkshopCtlPath  string
-		WorkshopStateDir string
-	}{
-		FsFreezePath:     fsFreezePath,
-		HasGRUB:          file.Runtime == workshop.RuntimeLXDVM,
-		StartTimeout:     startTimeout.Nanoseconds(),
-		WorkshopCtlPath:  filepath.Join(dirs.WorkshopGuestBinDir, filepath.Base(dirs.WorkshopCtlPath)),
-		WorkshopStateDir: dirs.WorkshopStateDir,
-	}
-	t := template.Must(template.New("cloud-config").Funcs(funcs).Parse(cloudConfigTemplate))
-	if err := t.Execute(&cloudConfig, dot); err != nil {
+	err = t.Execute(&cloudConfig, makeCloudConfigVars(file))
+	if err != nil {
 		return nil, err
 	}
 
