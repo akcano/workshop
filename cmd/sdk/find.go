@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"text/tabwriter"
 
+	"github.com/juju/ansiterm/tabwriter"
 	"github.com/spf13/cobra"
 
 	"github.com/canonical/workshop/client"
@@ -45,6 +45,9 @@ The query can match the SDK's name, title, summary, description, or publisher.
 Notes:
 
 - Only the latest release of the SDK is shown.
+- A mark after the publisher's name shows its validation in the Store:
+  "✓" for a verified publisher and "✪" for a starred one,
+  or "**" and "*" when the output isn't a terminal with a UTF-8 locale.
 - To view more details for one of the SDKs, use "sdk info".
 - To list SDKs on the local system, use "sdk list".
 `,
@@ -92,7 +95,7 @@ func (c *CmdFind) Run(cmd *cobra.Command, av []string) error {
 	esc := c.GetEscapes()
 	w := tabwriter.NewWriter(Stdout, 4, 3, 2, ' ', tabwriter.StripEscape)
 	if !c.noHeaders {
-		fmt.Fprintln(w, "NAME\tVERSION\tPUBLISHER\tSUMMARY")
+		fmt.Fprintf(w, "%sNAME\tVERSION\tPUBLISHER\tSUMMARY%s\n", esc.Bold, esc.End)
 	}
 	for _, sdk := range sdks {
 		version := cmdutil.EmptyDash(sdk.Version)

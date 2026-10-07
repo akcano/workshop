@@ -7,6 +7,7 @@
 File:
   Name: string
   Base: string
+  Runtime: workshop.Runtime
   Sdks: '[]workshop.SdkRecord'
   Actions:
   Connections:
@@ -30,6 +31,7 @@ Workshop:
   Hostname:
 BaseImage:
   Name: string
+  Runtime: workshop.Runtime
   Fingerprint: string
 SdkInstallation:
   Setup: sdk.Setup

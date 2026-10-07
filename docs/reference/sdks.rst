@@ -154,7 +154,9 @@ Currently, |ws_markup| and |sdk_markup| support the following interface plugs:
 - :ref:`Tunnel <ref_tunnel_interface>`
 
 
-Slots can only be defined for the :samp:`mount` interface.
+Regular SDKs can define slots only for the :samp:`mount` and :samp:`tunnel` interfaces.
+Slots for the other interfaces are built into the :samp:`system` SDK
+and cannot be added to it under another name.
 
 .. _ref_camera_interface:
 
@@ -316,8 +318,9 @@ An SSH plug in the definition must specify the plug name and the interface:
         interface: ssh-agent
 
 
-This proxies the host's SSH keys and configuration inside the workshop
-via a Unix domain socket.
+This proxies the host's SSH agent into the workshop
+via a Unix domain socket;
+private keys and SSH configuration files stay on the host.
 
 
 .. _ref_tunnel_interface:

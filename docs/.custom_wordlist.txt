@@ -46,7 +46,6 @@ elif
 enum
 env
 envvar
-Evals
 errcheck
 esac
 fi
@@ -113,13 +112,11 @@ moby
 modularization
 modularize
 monorepo
-multiagent
 multibase
 Multibase
 multiline
 Multipass
 multistage
-multistep
 multiworkshop
 nftables
 nonblocking
@@ -129,7 +126,6 @@ nondefault
 nonexistent
 nonexisting
 nonfunctional
-noninteractive
 nonoperational
 nonprivileged
 nonroot
@@ -146,12 +142,14 @@ OpenVINO
 passthrough
 pathname
 PlugRef
+PRs
 prebuilt
 predefined
 preexisting
 prepackaged
 prerelease
 presketching
+PRs
 PYTHONHOME
 QPA
 readme
@@ -194,7 +192,6 @@ stateDiagram
 stderr
 stdin
 stdout
-subagents
 subcommand
 subcommands
 subdirectory

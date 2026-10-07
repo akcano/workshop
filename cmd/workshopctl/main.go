@@ -28,6 +28,7 @@ import (
 
 	"github.com/canonical/workshop/client"
 	"github.com/canonical/workshop/internal/dirs"
+	"github.com/canonical/workshop/internal/fsfreeze"
 	"github.com/canonical/workshop/internal/waitready"
 )
 
@@ -96,6 +97,14 @@ func defaultResponseHandler(
 func main() {
 	if waitready.IsWaitreadyInvocation() {
 		if err := waitready.WaitReady(); err != nil {
+			fmt.Fprintf(os.Stderr, "error: %s\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	if fsfreeze.IsFsfreezeInvocation() {
+		if err := fsfreeze.FreezeLocalFilesystems(os.Stdin, os.Stdout); err != nil {
 			fmt.Fprintf(os.Stderr, "error: %s\n", err)
 			os.Exit(1)
 		}
