@@ -81,6 +81,7 @@ jobs:
               tests/main/interface-secret
               tests/main/secret-service-helper
               tests/main/system-secret-retrieval
+              tests/main/system-secret-retrieval-systemd
               tests/main/system-secret-default-collection
           - name: main-status-sdk
             label: main / status and SDKs
