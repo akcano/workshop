@@ -34,7 +34,10 @@ execute: |
       ws-system-secret-default/test-sdk-basic-2:api-key \
       ws-system-secret-default/system:api-key
 
-  echo "Check the workshop consumes the secret through workshopctl"
+  echo "Check the workshop consumes the secret and reports success"
+  exitcode=0
   workshop_exec exec ws-system-secret-default -- \
-      workshopctl get-secret test-sdk-basic-2.api-key > secret.out
+      workshopctl get-secret test-sdk-basic-2.api-key > secret.out \
+      || exitcode="$?"
+  [ "$exitcode" -eq 0 ]
   MATCH '^workshop-secret-value$' < secret.out
