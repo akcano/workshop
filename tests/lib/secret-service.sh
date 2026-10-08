@@ -71,6 +71,26 @@ collection.set_label(sys.argv[1])
 ' "$name"
 }
 
+# select_login_collection relabels the login keyring to name. A secret slot
+# whose collection is not "default" selects a collection by its label, while
+# its attributes select the secret item within that collection, so naming the
+# login keyring lets a slot use it. The login keyring is used rather than the
+# session keyring because only the login keyring can be locked, which tests of
+# a locked secret provider require.
+function select_login_collection() {
+    local name="$1"
+    secret_service_env python3 -c '
+import secretstorage
+import sys
+
+name = sys.argv[1]
+connection = secretstorage.dbus_init()
+collections = list(secretstorage.get_all_collections(connection))
+target = [c for c in collections if c.collection_path.endswith("/login")][0]
+target.set_label(name)
+' "$name"
+}
+
 # store_secret stores value in the host user's keyring using the supplied
 # secret-tool attribute pairs, for example:
 #
@@ -108,6 +128,45 @@ target = [c for c in collections if c.collection_path.endswith("/session")][0]
 target.set_label(name)
 target.create_item("Workshop secret test", attributes, value)
 ' "$name" "$value" "$@"
+}
+
+# store_duplicate_secret stores value in the login keyring without replacing an
+# existing matching item. Unlike store_secret, which uses secret-tool and
+# replaces a matching item, this uses the Secret Service CreateItem call with
+# replacement disabled, so calling it more than once with the same attributes
+# creates the ambiguous lookup that the provider reports as multiple matches.
+# Attributes are supplied as secret-tool style pairs, for example:
+#
+#   store_duplicate_secret value service workshop account demo
+function store_duplicate_secret() {
+    local value="$1"
+    shift
+    secret_service_env python3 -c '
+import secretstorage
+import sys
+
+value = sys.argv[1].encode()
+args = sys.argv[2:]
+attributes = dict(zip(args[::2], args[1::2]))
+
+connection = secretstorage.dbus_init()
+collections = list(secretstorage.get_all_collections(connection))
+target = [c for c in collections if c.collection_path.endswith("/login")][0]
+target.create_item("Workshop secret test", attributes, value)
+' "$value" "$@"
+}
+
+# lock_login_collection locks the login keyring so that subsequent secret
+# lookups report a locked secret provider.
+function lock_login_collection() {
+    secret_service_env python3 -c '
+import secretstorage
+
+connection = secretstorage.dbus_init()
+collections = list(secretstorage.get_all_collections(connection))
+target = [c for c in collections if c.collection_path.endswith("/login")][0]
+target.lock()
+'
 }
 
 # stop_secret_service stops the host user's keyring daemon and discards its
