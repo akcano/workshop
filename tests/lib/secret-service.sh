@@ -82,6 +82,34 @@ function store_secret() {
         secret-tool store --label="Workshop secret test" "$@"
 }
 
+# store_secret_in_collection stores value in a non-default collection labelled
+# name, so that a slot must select it by name rather than through the "default"
+# alias. It relabels the keyring's session collection, which is not the default
+# collection, and creates the secret there. Attributes are supplied as
+# secret-tool style pairs, for example:
+#
+#   store_secret_in_collection workshop-named value service workshop account demo
+function store_secret_in_collection() {
+    local name="$1"
+    local value="$2"
+    shift 2
+    secret_service_env python3 -c '
+import secretstorage
+import sys
+
+name = sys.argv[1]
+value = sys.argv[2].encode()
+args = sys.argv[3:]
+attributes = dict(zip(args[::2], args[1::2]))
+
+connection = secretstorage.dbus_init()
+collections = list(secretstorage.get_all_collections(connection))
+target = [c for c in collections if c.collection_path.endswith("/session")][0]
+target.set_label(name)
+target.create_item("Workshop secret test", attributes, value)
+' "$name" "$value" "$@"
+}
+
 # stop_secret_service stops the host user's keyring daemon and discards its
 # keyring.
 function stop_secret_service() {
