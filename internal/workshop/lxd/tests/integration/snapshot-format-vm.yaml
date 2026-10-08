@@ -29,7 +29,6 @@ launched:
       [device "qemu_tablet"]
 
       [machine]
-      i8042 = "off"
       hpet = "off"
       sata = "off"
     user.workshop.name: test
@@ -80,7 +79,6 @@ started:
       [device "qemu_tablet"]
 
       [machine]
-      i8042 = "off"
       hpet = "off"
       sata = "off"
     user.workshop.name: test
@@ -131,7 +129,6 @@ sdk-attached:
       [device "qemu_tablet"]
 
       [machine]
-      i8042 = "off"
       hpet = "off"
       sata = "off"
     user.workshop.name: test
@@ -194,7 +191,6 @@ sdk-mounted:
       [device "qemu_tablet"]
 
       [machine]
-      i8042 = "off"
       hpet = "off"
       sata = "off"
     user.workshop.name: test
