@@ -34,7 +34,17 @@ function start_secret_service() {
     local uid
     uid="$(id -u ubuntu)"
 
-    pkill -u ubuntu gnome-keyring-daemon || true
+    # The process name is truncated to 15 characters, so a bare
+    # "gnome-keyring-daemon" pattern matches nothing; match the command line
+    # instead. Leaving a previous daemon running would leak its locked or
+    # relabelled collections into the next test.
+    pkill -u ubuntu -f '^gnome-keyring-daemon' || true
+    # Wait for the daemon to exit so it cannot rewrite the keyring files or
+    # keep the org.freedesktop.secrets name while the next daemon starts.
+    for _ in $(seq 1 20); do
+        pgrep -u ubuntu -f '^gnome-keyring-daemon' >/dev/null || break
+        sleep 0.5
+    done
     rm -rf /home/ubuntu/.local/share/keyrings
 
     # The session bus is provided by the host user's lingering user manager.
@@ -172,6 +182,6 @@ target.lock()
 # stop_secret_service stops the host user's keyring daemon and discards its
 # keyring.
 function stop_secret_service() {
-    pkill -u ubuntu gnome-keyring-daemon || true
+    pkill -u ubuntu -f '^gnome-keyring-daemon' || true
     rm -rf /home/ubuntu/.local/share/keyrings
 }
