@@ -45,6 +45,10 @@ function start_secret_service() {
         pgrep -u ubuntu -f '^gnome-keyring-daemon' >/dev/null || break
         sleep 0.5
     done
+    if pgrep -u ubuntu -f '^gnome-keyring-daemon' >/dev/null; then
+        echo "gnome-keyring-daemon did not exit within 10s" >&2
+        return 1
+    fi
     rm -rf /home/ubuntu/.local/share/keyrings
 
     # The session bus is provided by the host user's lingering user manager.
@@ -162,7 +166,7 @@ attributes = dict(zip(args[::2], args[1::2]))
 connection = secretstorage.dbus_init()
 collections = list(secretstorage.get_all_collections(connection))
 target = [c for c in collections if c.collection_path.endswith("/login")][0]
-target.create_item("Workshop secret test", attributes, value)
+target.create_item("Workshop secret test", attributes, value, replace=False)
 ' "$value" "$@"
 }
 
