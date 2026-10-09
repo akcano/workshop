@@ -51,7 +51,7 @@ so it describes the need, not the value or where to find it:
 
 The plug's name becomes part of how the SDK asks for the value.
 Inside the workshop,
-the secret is identified as :samp:`<SDK>.<PLUG>`,
+the secret is identified as :samp:`{SDK}.{PLUG}`,
 which is :samp:`secret-demo.api-key`
 for the plug above in an SDK named :samp:`secret-demo`.
 Both the SDK's commands and its systemd units request the value by that identifier.
@@ -91,6 +91,8 @@ a lookup succeeds only when exactly one item carries all of them.
 An optional :samp:`collection` selects the keyring collection to search,
 and the collection that the keyring's :samp:`default` alias points to
 is used when the slot doesn't name one.
+A non-default value is matched against collection labels
+and must identify exactly one collection.
 For the full grammar,
 see :ref:`ref_workshop_definition_interfaces`.
 
@@ -140,9 +142,12 @@ Connecting reads nothing from the keyring
 and puts nothing in the workshop;
 it only permits later requests.
 
-A :command:`workshop refresh` keeps the connection,
-including a refresh that changes the slot's attributes,
+For an LXD container workshop,
+:command:`workshop refresh` keeps the connection,
+including when the refresh changes the slot's attributes,
 so a corrected lookup takes effect without reconnecting.
+VM workshops don't restore interface connections during a refresh;
+the user must reconnect the plug afterward.
 A :command:`workshop restore` drops it, like any manual connection,
 and so does a refresh that removes the plug from the SDK
 or the slot from the workshop definition;
@@ -156,8 +161,10 @@ How a value reaches the workshop
 
 Nothing is fetched in advance.
 |ws_markup| looks the value up in the host keyring
-each time a process in the workshop requests it,
-and hands it only to that process.
+each time a process in the workshop requests it.
+A direct command request writes the value to standard output;
+a systemd request makes it available as a credential file
+to the unit's user and root.
 |ws_markup| doesn't persist the value;
 it handles the value only transiently while fulfilling the request.
 
@@ -211,11 +218,11 @@ A long-running service receives the value as a systemd credential.
 Every workshop runs a secret socket,
 and runtime hooks get its path in :envvar:`SDK_SYSTEMD_SECRET_SOCKET`.
 A hook that installs a unit
-names the credential :samp:`<SDK>.<PLUG>`,
+names the credential :samp:`{SDK}.{PLUG}`,
 here :samp:`secret-demo.api-key`,
 and points it at that socket:
 
-.. code-block:: none
+.. code-block:: ini
 
    LoadCredential=secret-demo.api-key:${SDK_SYSTEMD_SECRET_SOCKET}
 
@@ -237,18 +244,21 @@ and the cause is logged in the :samp:`workshop-secret@` journal.
 This lets a service start without the secret
 and decide for itself how to handle the missing value.
 
-Expect an empty credential on the first start after a launch or a refresh.
 At launch,
 a service can start before the user has connected the plug.
-During a refresh,
+During an LXD container refresh,
 intact SDK services restart with the workshop,
 and updated SDKs run their :samp:`setup-base` hooks,
 before |ws_markup| restores preserved connections.
-A service that starts in either situation
-therefore gets an empty credential on that first start.
+A service that starts in either situation can therefore receive
+an empty credential on that first start.
 Give its unit a restart policy,
 or restart it once the plug is connected;
 :ref:`how_use_secrets` shows both.
+
+VM refreshes don't restore interface connections.
+Reconnect the plug,
+then restart the service.
 
 
 Request records
@@ -279,9 +289,15 @@ A connection grants access to the workshop,
 not to one SDK or one process.
 While the plug is connected,
 any process in the workshop can request the value
-by naming the plug's :samp:`<SDK>.<PLUG>`,
+by naming the plug's :samp:`{SDK}.{PLUG}`,
 including commands that don't belong to the SDK
 and units installed by other SDKs.
+
+A systemd credential is readable by the unit's user and root.
+Because ordinary workshop commands and services share the
+:samp:`workshop` user,
+other processes running as that user can read the credential file
+while the service runs.
 
 Once a process receives the value,
 |ws_markup| has no further control over it.
