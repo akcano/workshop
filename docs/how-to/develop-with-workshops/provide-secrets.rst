@@ -24,19 +24,15 @@ Prerequisites
 
 Before starting, ensure you have these requirements satisfied:
 
-- A |ws_markup| installation that supports the :samp:`secret` interface.
 - A desktop session that runs a keyring service
   implementing the freedesktop.org Secret Service,
   such as GNOME Keyring.
   |ws_markup| looks the secret up through that session's D-Bus session bus.
+
 - The :program:`secret-tool` utility,
   shipped in the :samp:`libsecret-tools` package on Ubuntu,
   to store and check keyring items.
-- A credential stored in the host keyring under attributes that identify it,
-  in the collection the lookup searches:
-  the keyring's default collection, unless the slot names another.
-  The keyring must be unlocked whenever the value is requested.
-  :ref:`how_provide_secrets_store` shows how to store the credential.
+
 - A workshop definition that includes an SDK declaring a :samp:`secret` plug.
   The SDK's documentation names the plug
   and the credential it expects.
@@ -158,6 +154,7 @@ Use only these keys in the slot:
 
 - :samp:`attributes` holds at least one attribute with a string value.
   The lookup matches an item that carries all of them.
+
 - :samp:`collection` optionally selects the keyring collection to search.
   Without it, the lookup searches the collection
   that the keyring's :samp:`default` alias points to,
@@ -239,7 +236,7 @@ any command in the workshop can request the value the same way.
 Check when the secret was requested
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Every request leaves a record in the workshop's changes,
+Every request creates a recent record in the workshop's changes,
 whether it comes from an SDK command or a service,
 so you can check whether and when the SDK received the secret.
 :command:`workshop changes` lists each request
@@ -264,6 +261,10 @@ to the process that requested it;
 :samp:`Error` means that it wasn't.
 The :samp:`SPAWN` column shows when the request was made.
 Neither the changes nor their tasks ever contain the value.
+They are troubleshooting history, not a durable audit trail:
+ready changes are normally pruned after about 24 hours,
+and older records can be removed sooner
+when the project retains more than 500 ready changes.
 
 To see why a request failed,
 list the tasks of its change;
@@ -282,7 +283,8 @@ the end of the logged error names the cause:
      2026-10-09T12:11:46Z ERROR getting secret value for sdk "<SDK>" and plug "<PLUG>" in workshop "<WORKSHOP>": resolving secret: provider "system": retrieving system secret: secret provider is locked
 
 
-The log is there even when the SDK doesn't show you the error.
+While Workshop retains the change,
+the log is available even when the SDK doesn't show you the error.
 
 
 Fix failed lookups
