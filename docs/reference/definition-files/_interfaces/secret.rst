@@ -14,7 +14,7 @@ to processes in the workshop on request.
 - Plug attributes: none.
 
 - Plug name: any valid plug name.
-  Processes in the workshop request the value as :samp:`<SDK>.<PLUG>`.
+  Processes in the workshop request the value as :samp:`{SDK}.{PLUG}`.
 
 - Plug owner: any regular SDK; not the system SDK.
 
@@ -46,6 +46,8 @@ It takes these attributes and no others:
        :samp:`default` selects the collection
        that the keyring's :samp:`default` alias points to;
        any other value is matched against collection labels.
+       A label must identify exactly one collection.
+       No match or multiple matches make the request fail.
        Must not be empty or blank.
        Defaults to :samp:`default`.
 
