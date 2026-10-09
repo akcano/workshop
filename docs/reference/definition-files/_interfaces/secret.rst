@@ -12,9 +12,12 @@ The secret interface delivers a credential from the host keyring
 to processes in the workshop on request.
 
 - Plug attributes: none.
+
 - Plug name: any valid plug name.
   Processes in the workshop request the value as :samp:`<SDK>.<PLUG>`.
+
 - Plug owner: any regular SDK; not the system SDK.
+
 - Slot: the system SDK only, through slots added in the workshop definition.
   Other SDKs cannot declare secret slots.
 
