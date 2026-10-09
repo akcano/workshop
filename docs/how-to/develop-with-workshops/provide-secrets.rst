@@ -18,7 +18,32 @@ such as an API key for an AI coding agent.
 |ws_markup| can deliver that credential to the workshop
 without writing the value into the workshop definition
 or the project directory.
-There are two ways to do it,
+
+Prerequisites
+-------------
+
+Before starting, ensure you have these requirements satisfied:
+
+- A desktop session that runs a keyring service
+  implementing the freedesktop.org Secret Service,
+  such as GNOME Keyring.
+  |ws_markup| looks the secret up through that session's D-Bus session bus.
+
+- The :program:`secret-tool` utility,
+  shipped in the :samp:`libsecret-tools` package on Ubuntu,
+  to store and check keyring items.
+
+- A workshop definition that includes an SDK declaring a :samp:`secret` plug.
+  The SDK's documentation names the plug
+  and the credential it expects.
+
+
+The OpenAI API key in the examples below is illustrative.
+Use the keyring attributes, slot name, and environment variable
+expected by your SDK instead.
+
+
+There are two ways to provide a credential,
 so pick one before you start:
 
 .. list-table::
@@ -28,20 +53,24 @@ so pick one before you start:
    * -
      - From the host keyring
      - For a single command
+
    * - What persists
      - The value stays in your keyring;
        the workshop keeps only the connection,
        which survives refreshes until you disconnect it
      - Nothing; the next command in the workshop doesn't see the value
+
    * - Who can read the value
      - Any command in the workshop,
        through the connected plug,
        each time it asks for the value
      - The command you run and the processes it starts,
        for that run only
-   * - Retyping
+
+   * - Per-run effort
      - None once you connect the plug
-     - Every run
+     - Name the variable in every command
+
    * - Suits
      - An SDK you use repeatedly
      - A one-off command that you run yourself
@@ -55,29 +84,6 @@ so pick one before you start:
    the project directory, definition included,
    is visible inside the workshop and often ends up in version control,
    and a shell profile exports its variables to every command you run.
-
-
-Prerequisites
--------------
-
-Before starting, ensure you have these requirements satisfied:
-
-- A |ws_markup| installation that supports the :samp:`secret` interface.
-- A desktop session that runs a keyring service
-  implementing the freedesktop.org Secret Service,
-  such as GNOME Keyring.
-  |ws_markup| looks the secret up through that session's D-Bus session bus.
-- The :program:`secret-tool` utility,
-  shipped in the :samp:`libsecret-tools` package on Ubuntu,
-  to store and check keyring items.
-- A credential stored in the host keyring under attributes that identify it,
-  in the collection the lookup searches:
-  the keyring's default collection, unless the slot names another.
-  The keyring must be unlocked whenever the value is requested.
-  :ref:`how_provide_secrets_store` shows how to store the credential.
-- A workshop definition that includes an SDK declaring a :samp:`secret` plug.
-  The SDK's documentation names the plug
-  and the credential it expects.
 
 
 Use a secret from the host keyring
@@ -106,13 +112,17 @@ so it never appears on the command line:
    $ secret-tool store --label="OpenAI API key" --collection=default service openai account work
 
 
-To check that the item is stored,
-look it up by the same attributes;
-:program:`secret-tool` prints the value:
+To check that the item is stored without printing its value,
+search by the same attributes and discard standard output.
+:program:`secret-tool` writes the value there,
+but prints the item's attributes on standard error:
 
 .. code-block:: console
 
-   $ secret-tool lookup service openai account work
+   $ secret-tool search service openai account work >/dev/null
+
+     attribute.account = work
+     attribute.service = openai
 
 
 Add a secret slot
@@ -144,13 +154,14 @@ Use only these keys in the slot:
 
 - :samp:`attributes` holds at least one attribute with a string value.
   The lookup matches an item that carries all of them.
+
 - :samp:`collection` optionally selects the keyring collection to search.
   Without it, the lookup searches the collection
   that the keyring's :samp:`default` alias points to,
   which is the Login keyring in GNOME Keyring.
   Any other value is matched against collection labels.
 
-Apply the definition with :command:`workshop launch` for a new workshop,
+Apply the definition with :command:`workshop launch` for a new workshop,
 or refresh an existing one:
 
 .. code-block:: console
@@ -196,7 +207,7 @@ Confirm the connection in the connections listing:
      secret     <WORKSHOP>/<SDK>:<PLUG>  <WORKSHOP>/system:openai-key  manual
 
 
-The connection persists across :command:`workshop refresh`,
+The connection persists across :command:`workshop refresh`,
 including a refresh that changes the slot's attributes.
 To withdraw access, disconnect the plug:
 
@@ -209,11 +220,71 @@ Use the secret
 ~~~~~~~~~~~~~~
 
 Run the SDK's commands as usual.
-The SDK asks for the secret at the moment it needs the value,
-and |ws_markup| looks it up in the host keyring for each request
-instead of copying the value into the workshop.
+Nothing is fetched in advance:
+|ws_markup| looks the value up in the host keyring
+only when an SDK command or service requests it,
+hands it only to the process that made the request,
+and keeps no copy in the workshop.
+Each request is a fresh lookup,
+so a value you change in the keyring takes effect on the next one.
 While the plug stays connected,
 any command in the workshop can request the value the same way.
+
+
+.. _how_provide_secrets_check:
+
+Check when the secret was requested
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Every request creates a recent record in the workshop's changes,
+whether it comes from an SDK command or a service,
+so you can check whether and when the SDK received the secret.
+:command:`workshop changes` lists each request
+as a :samp:`Retrieve secret` change named after the plug,
+among the other recent changes:
+
+.. code-block:: console
+
+   $ workshop changes
+
+     ID  STATUS  SPAWN               READY               SUMMARY
+     ...
+     44  Done    today at 12:11 UTC  today at 12:11 UTC  Execute command "sh"
+     45  Error   today at 12:11 UTC  today at 12:11 UTC  Retrieve secret "<WORKSHOP>/<SDK>:<PLUG>"
+     ...
+     58  Done    today at 12:12 UTC  today at 12:12 UTC  Execute command "sh"
+     59  Done    today at 12:12 UTC  today at 12:12 UTC  Retrieve secret "<WORKSHOP>/<SDK>:<PLUG>"
+
+
+A :samp:`Done` change means that the secret was delivered
+to the process that requested it;
+:samp:`Error` means that it wasn't.
+The :samp:`SPAWN` column shows when the request was made.
+Neither the changes nor their tasks ever contain the value.
+They are troubleshooting history, not a durable audit trail:
+ready changes are normally pruned after about 24 hours,
+and older records can be removed sooner
+when the project retains more than 500 ready changes.
+
+To see why a request failed,
+list the tasks of its change;
+the end of the logged error names the cause:
+
+.. code-block:: console
+
+   $ workshop tasks 45
+
+     STATUS  DURATION  SUMMARY
+     Error       47ms  Retrieve secret "<WORKSHOP>/<SDK>:<PLUG>"
+
+     ......................................................................
+     Retrieve secret "<WORKSHOP>/<SDK>:<PLUG>"
+
+     2026-10-09T12:11:46Z ERROR getting secret value for sdk "<SDK>" and plug "<PLUG>" in workshop "<WORKSHOP>": resolving secret: provider "system": retrieving system secret: secret provider is locked
+
+
+While Workshop retains the change,
+the log is available even when the SDK doesn't show you the error.
 
 
 Fix failed lookups
@@ -230,39 +301,53 @@ so that only an error reaches your terminal:
 
    $ workshop exec <WORKSHOP> -- sh -c 'workshopctl get-secret <SDK>.<PLUG> > /dev/null'
 
-     error: checking secret retrieval change <ID>: cannot perform the following tasks:
-     - Retrieve secret "<WORKSHOP>/<SDK>:<PLUG>" (... retrieving system secret: secret provider is locked)
+     cannot retrieve secret for plug "<SDK>.<PLUG>": unlock the secret provider and try again
 
 
 No output means the lookup succeeded.
-Otherwise, the end of the error names the cause:
+Otherwise, the error names the cause:
 
 .. list-table::
    :header-rows: 1
-   :widths: 2 3 4
+   :widths: 3 3 4
 
-   * - Error ends with
+   * - Error
      - Cause
      - Fix
-   * - :samp:`secret provider is locked`
-     - The keyring collection is locked.
+
+   * - :samp:`cannot retrieve secret for plug "<SDK>.<PLUG>": unlock the secret provider and try again`
+     - The keyring collection is locked;
+       logged as :samp:`secret provider is locked`.
      - Unlock the keyring in your desktop session,
        then run the command again.
-   * - :samp:`secret not found`
-     - No item in the collection carries all the slot's attributes.
-     - Compare the slot with :command:`secret-tool lookup`
+
+   * - :samp:`no secret found for plug "<SDK>.<PLUG>"`
+     - No item in the collection carries all the slot's attributes,
+       or the slot names a collection that doesn't exist;
+       logged as :samp:`secret not found`.
+     - Compare the slot with :command:`secret-tool search`
        using the same attributes,
        correct the slot's :samp:`attributes` or :samp:`collection`,
-       then run :command:`workshop refresh`;
+       then run :command:`workshop refresh`;
        the connection stays in place.
-   * - :samp:`multiple secrets match the request`
-     - Several items carry all the slot's attributes.
+
+   * - :samp:`multiple secrets match plug "<SDK>.<PLUG>"; refine the secret slot`
+     - Several items carry all the slot's attributes;
+       logged as :samp:`multiple secrets match the request`.
      - Add an attribute to the slot that only the intended item carries,
-       then run :command:`workshop refresh`,
+       then run :command:`workshop refresh`,
        or remove the other items from the keyring.
-   * - :samp:`secret plug is not connected`
-     - The plug isn't connected to the slot.
+
+   * - :samp:`secret plug "<SDK>.<PLUG>" is not connected`
+     - The plug isn't connected to the slot;
+       logged as :samp:`plug is not connected`.
      - Connect it as described in :ref:`how_provide_secrets_connect`.
+
+   * - :samp:`cannot retrieve secret for plug "<SDK>.<PLUG>": internal error`
+     - Another failure;
+       the error leaves out the details.
+     - Find the cause in the logged error,
+       as described in :ref:`how_provide_secrets_check`.
 
 
 Pass a secret to a single command
@@ -270,41 +355,63 @@ Pass a secret to a single command
 
 For a one-off command that you run yourself,
 pass the value as an environment variable
-of a single :command:`workshop exec` or :command:`workshop run` invocation
+of a single :command:`workshop exec` or :command:`workshop run` invocation
 with the :option:`!--env` flag.
 
-The safer form takes the value from your calling shell.
-Set the variable without typing the value on the command line,
-then name it in :option:`!--env`:
+Don't type the value itself on the command line,
+as in :samp:`--env OPENAI_API_KEY=<VALUE>`:
+it stays in your shell history,
+and other processes on the host can read it from the process list
+while the command runs.
+Instead, give :option:`!--env` only the variable's name;
+|ws_markup| then takes the value from the environment
+of the :program:`workshop` command itself.
+Fill that variable from where the credential is already stored,
+so that you never type the value.
+
+For a single command,
+fetch the value with a command substitution
+in an assignment that prefixes the command:
 
 .. code-block:: console
 
-   $ read -rs OPENAI_API_KEY && export OPENAI_API_KEY
+   $ OPENAI_API_KEY=$(secret-tool lookup service openai account work) workshop exec --env OPENAI_API_KEY <WORKSHOP> -- <COMMAND>
+
+
+The shell history records the lookup, not the value,
+and the assignment applies only to that command,
+so the variable doesn't remain in your shell afterwards.
+
+If you use `direnv <https://direnv.net/>`_ on the host,
+let it set the variable whenever you enter the project directory,
+with an :file:`.envrc` file that runs the same lookup:
+
+.. code-block:: shell
+   :caption: .envrc
+
+   export OPENAI_API_KEY=$(secret-tool lookup service openai account work)
+
+
+Then name the variable in each command:
+
+.. code-block:: console
+
    $ workshop exec --env OPENAI_API_KEY <WORKSHOP> -- <COMMAND>
 
 
-If the named variable isn't set in your calling shell,
+The :file:`.envrc` file lives in the project directory,
+which is visible inside the workshop and may end up in version control,
+so it must hold only the lookup, never the value.
+Also, every command you run in that directory on the host
+inherits the variable.
+
+If the named variable isn't set,
 |ws_markup| skips it without an error
-and runs the command without it,
-so check that the variable is set first.
+and runs the command without it.
 
-You can also supply the value directly,
-but then it lands in your shell history:
-
-.. code-block:: console
-
-   $ workshop exec --env OPENAI_API_KEY=<VALUE> <WORKSHOP> -- <COMMAND>
-
-
-Either way, the value exists only for that invocation:
+In both cases, the value exists only for that invocation:
 the command and every process it starts can read it,
 and the next command in the workshop doesn't see it.
-Nothing persists in the workshop,
-but the variable stays in your calling shell until you remove it:
-
-.. code-block:: console
-
-   $ unset OPENAI_API_KEY
 
 
 See also
@@ -317,8 +424,11 @@ Explanation:
 
 Reference:
 
+- :ref:`ref_workshop_changes`
 - :ref:`ref_workshop_connect`
 - :ref:`ref_workshop_connections`
 - :ref:`ref_workshop_disconnect`
 - :ref:`ref_workshop_exec`
 - :ref:`ref_workshop_run`
+- :ref:`ref_workshop_tasks`
+- :ref:`ref_workshopctl__cli`

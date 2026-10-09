@@ -114,7 +114,7 @@ func (f *LxdBeTests) TestDefaultContainerConfig(c *check.C) {
 	// cloud-config changes won't apply to new workshops until the user
 	// downloads a new base image or system SDK.
 	digest := sha3.Sum384([]byte(cfg["cloud-init.user-data"]))
-	c.Check(hex.EncodeToString(digest[:]), check.Equals, "8188b65112b1a98617508a8f74c0c717af660d9c67354a4d59fe955991fe46a8f8219d969b392c57e74e551f283b2ba7")
+	c.Check(hex.EncodeToString(digest[:]), check.Equals, "eecdd7227020df46220bdcb82a41d4a4b456b28623888fc3b58b7a057dcf058e00ffe163af0d51df74686169156c9806")
 }
 
 var vmFile = `name: test
@@ -153,7 +153,31 @@ func (f *LxdBeTests) TestDefaultVMConfig(c *check.C) {
 	// cloud-config changes won't apply to new workshops until the user
 	// downloads a new base image or system SDK.
 	digest := sha3.Sum384([]byte(cfg["cloud-init.user-data"]))
-	c.Check(hex.EncodeToString(digest[:]), check.Equals, "123cc47c293fd355150d4438ff92a41a2e38a085d2b6418c313b2a5a33c740664402c21b422bddb8d8d1d668b14318a6")
+	c.Check(hex.EncodeToString(digest[:]), check.Equals, "10aacf882e4e6afa912c255edde2a6d462fbcb273500c42ee88f5ef1e41d08270cdde27e23b44580e878875ae986dfc7")
+}
+
+// The cloud-init user-data must install and enable the systemd socket unit
+// that SDK units connect to for LoadCredential secret resolution, along with
+// its associated service unit.
+func (f *LxdBeTests) TestWorkshopConfigSecretSocketUnits(c *check.C) {
+	b := &lxdbackend.Backend{}
+	file := &workshop.File{
+		Name: "test",
+		Base: "ubuntu@22.04",
+	}
+
+	cfg, err := lxdbackend.DefaultConfig(b, f.project.ProjectId, "1001", "1001", file, b.FormatRevision(), "fakeimage12345")
+	c.Assert(err, check.IsNil)
+
+	userData := cfg["cloud-init.user-data"]
+	c.Check(userData, check.Matches, `(?s).*path: /etc/systemd/system/workshop-secret\.socket.*`)
+	c.Check(userData, check.Matches, `(?s).*ListenStream=/var/lib/workshop/run/workshop\.socket\.secret.*`)
+	c.Check(userData, check.Matches, `(?s).*Accept=yes.*`)
+	c.Check(userData, check.Matches, `(?s).*path: /etc/systemd/system/workshop-secret@\.service.*`)
+	c.Check(userData, check.Matches, `(?s).*ExecStart=/var/lib/workshop/bin/workshopctl get-secret --systemd.*`)
+	c.Check(userData, check.Matches, `(?s).*StandardInput=socket.*`)
+	c.Check(userData, check.Matches, `(?s).*StandardOutput=socket.*`)
+	c.Check(userData, check.Matches, `(?s).*systemctl enable --now workshop-secret\.socket.*`)
 }
 
 func (f *LxdBeTests) TestCheckLxdVersion(c *check.C) {

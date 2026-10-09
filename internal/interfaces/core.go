@@ -105,6 +105,12 @@ func NewConnRef(plug *sdk.PlugInfo, slot *sdk.SlotInfo) *ConnRef {
 	return &ConnRef{PlugRef: plug.Ref(), SlotRef: slot.Ref()}
 }
 
+// ConnectedToPlug reports whether the connection's plug matches ref,
+// including its project, workshop, SDK and name.
+func (conn *ConnRef) ConnectedToPlug(ref sdk.PlugRef) bool {
+	return conn.PlugRef == ref
+}
+
 // ID returns a string identifying a given connection.
 func (conn *ConnRef) ID() string {
 	return fmt.Sprintf("%s/%s/%s:%s %s/%s/%s:%s",
@@ -177,8 +183,17 @@ type PlugSanitizer interface {
 	BeforePreparePlug(plug *sdk.PlugInfo) error
 }
 
-// SlotSanitizer can be implemented by Interfaces that have reasons to sanitize their slots.
+// SlotSanitizer is implemented by interfaces that validate or normalize slot
+// definitions before they are added to the interface repository.
+//
+// Implementations may modify slot attributes to apply defaults or store a
+// canonical representation. They must not change the slot's identity,
+// including its name, interface, or owning SDK.
 type SlotSanitizer interface {
+	// BeforePrepareSlot validates and normalizes slot.
+	//
+	// It returns an error when the slot definition is invalid. On success,
+	// slot may contain normalized attributes or interface-defined defaults.
 	BeforePrepareSlot(slot *sdk.SlotInfo) error
 }
 
@@ -260,3 +275,11 @@ const (
 	// SecurityLxdDevice creates LXD device configurations (mount, GPU, etc.)
 	SecurityLxdDevice SecuritySystem = "lxd-device"
 )
+
+// CompareByName compares two [Interface] values by their names,
+// returning a negative number when a sorts before b, zero when their names
+// are equal, and a positive number when a sorts after b. It is intended as
+// a comparison function for [slices.SortFunc] and friends.
+func CompareByName(a, b Interface) int {
+	return strings.Compare(a.Name(), b.Name())
+}

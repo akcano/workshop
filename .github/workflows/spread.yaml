@@ -75,6 +75,17 @@ jobs:
               tests/main/shell
               tests/main/ssh
               tests/main/workshop-connections
+          - name: main-secrets
+            label: main / secrets
+            paths: >-
+              tests/main/interface-secret
+              tests/main/secret-service-helper
+              tests/main/system-secret-retrieval
+              tests/main/system-secret-retrieval-systemd
+              tests/main/system-secret-retrieval-failure
+              tests/main/system-secret-retrieval-systemd-failure
+              tests/main/system-secret-default-collection
+              tests/main/system-secret-named-collection-systemd
           - name: main-status-sdk
             label: main / status and SDKs
             paths: >-

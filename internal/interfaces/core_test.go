@@ -69,6 +69,120 @@ func (s *CoreSuite) TestSlotRefString(c *C) {
 	c.Check(refPtr.String(), Equals, s.projectId+"/ws/sdk:slot")
 }
 
+// ConnectedToPlug matches the full plug identity independently of the slot.
+func (s *CoreSuite) TestConnectedToPlug(c *C) {
+	conn := &interfaces.ConnRef{
+		PlugRef: sdk.PlugRef{
+			Name:      "api-key",
+			ProjectId: "test-project",
+			Sdk:       "ollama",
+			Workshop:  "backend",
+		},
+		SlotRef: sdk.SlotRef{
+			Name:      "host-api-key",
+			ProjectId: "provider-project",
+			Sdk:       "system",
+			Workshop:  "secrets",
+		},
+	}
+	ref := sdk.PlugRef{
+		Name:      "api-key",
+		ProjectId: "test-project",
+		Sdk:       "ollama",
+		Workshop:  "backend",
+	}
+
+	c.Check(conn.ConnectedToPlug(ref), Equals, true)
+}
+
+// ConnectedToPlug rejects a different plug name in the same SDK.
+func (s *CoreSuite) TestConnectedToPlugDifferentName(c *C) {
+	conn := &interfaces.ConnRef{
+		PlugRef: sdk.PlugRef{
+			Name:      "api-key",
+			ProjectId: "test-project",
+			Sdk:       "ollama",
+			Workshop:  "backend",
+		},
+		SlotRef: sdk.SlotRef{
+			Name:      "host-api-key",
+			ProjectId: "provider-project",
+			Sdk:       "system",
+			Workshop:  "secrets",
+		},
+	}
+	ref := conn.PlugRef
+	ref.Name = "other-key"
+
+	c.Check(conn.ConnectedToPlug(ref), Equals, false)
+}
+
+// ConnectedToPlug rejects an otherwise identical plug in another project.
+func (s *CoreSuite) TestConnectedToPlugDifferentProject(c *C) {
+	conn := &interfaces.ConnRef{
+		PlugRef: sdk.PlugRef{
+			Name:      "api-key",
+			ProjectId: "test-project",
+			Sdk:       "ollama",
+			Workshop:  "backend",
+		},
+		SlotRef: sdk.SlotRef{
+			Name:      "host-api-key",
+			ProjectId: "provider-project",
+			Sdk:       "system",
+			Workshop:  "secrets",
+		},
+	}
+	ref := conn.PlugRef
+	ref.ProjectId = "other-project"
+
+	c.Check(conn.ConnectedToPlug(ref), Equals, false)
+}
+
+// ConnectedToPlug rejects an otherwise identical plug from another SDK.
+func (s *CoreSuite) TestConnectedToPlugDifferentSDK(c *C) {
+	conn := &interfaces.ConnRef{
+		PlugRef: sdk.PlugRef{
+			Name:      "api-key",
+			ProjectId: "test-project",
+			Sdk:       "ollama",
+			Workshop:  "backend",
+		},
+		SlotRef: sdk.SlotRef{
+			Name:      "host-api-key",
+			ProjectId: "provider-project",
+			Sdk:       "system",
+			Workshop:  "secrets",
+		},
+	}
+	ref := conn.PlugRef
+	ref.Sdk = "other-sdk"
+
+	c.Check(conn.ConnectedToPlug(ref), Equals, false)
+}
+
+// ConnectedToPlug rejects an otherwise identical plug in another workshop.
+func (s *CoreSuite) TestConnectedToPlugDifferentWorkshop(c *C) {
+	conn := &interfaces.ConnRef{
+		PlugRef: sdk.PlugRef{
+			Name:      "api-key",
+			ProjectId: "test-project",
+			Sdk:       "ollama",
+			Workshop:  "backend",
+		},
+		SlotRef: sdk.SlotRef{
+			Name:      "host-api-key",
+			ProjectId: "provider-project",
+			Sdk:       "system",
+			Workshop:  "secrets",
+		},
+	}
+	ref := conn.PlugRef
+	ref.Workshop = "other-workshop"
+
+	c.Check(conn.ConnectedToPlug(ref), Equals, false)
+}
+
 // ConnRef.ID works as expected
 func (s *CoreSuite) TestConnRefID(c *C) {
 	conn := &interfaces.ConnRef{
@@ -113,6 +227,17 @@ func (s *CoreSuite) TestByName(c *C) {
 	iface, err := interfaces.ByName("mock-network")
 	c.Assert(err, IsNil)
 	c.Assert(iface.Name(), Equals, "mock-network")
+}
+
+// TestCompareByName verifies that CompareByName orders interfaces by name
+// with strings.Compare semantics: negative when the first sorts before the
+// second, zero when the names are equal, positive when it sorts after.
+func (s *CoreSuite) TestCompareByName(c *C) {
+	before := simpleIface{name: "camera"}
+	after := simpleIface{name: "mount"}
+	c.Check(interfaces.CompareByName(before, after) < 0, Equals, true)
+	c.Check(interfaces.CompareByName(after, before) > 0, Equals, true)
+	c.Check(interfaces.CompareByName(before, simpleIface{name: "camera"}), Equals, 0)
 }
 
 type serviceSnippetIface struct {
