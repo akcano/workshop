@@ -15,7 +15,7 @@ to processes in the workshop on request.
 - Plug name: any valid plug name.
   Processes in the workshop request the value as :samp:`<SDK>.<PLUG>`.
 - Plug owner: any regular SDK; not the system SDK.
-- Slot owner: the system SDK only, through slots added in the workshop definition.
+- Slot: the system SDK only, through slots added in the workshop definition.
   Other SDKs cannot declare secret slots.
 
 A secret slot describes the host keyring item to look up, never its value.
@@ -43,7 +43,7 @@ It takes these attributes and no others:
        :samp:`default` selects the collection
        that the keyring's :samp:`default` alias points to;
        any other value is matched against collection labels.
-       Must not be empty.
+       Must not be empty or blank.
        Defaults to :samp:`default`.
 
 

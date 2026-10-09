@@ -15,9 +15,9 @@ Secret interface
 The secret interface lets an SDK use a credential,
 such as an API key,
 that stays in the user's host keyring.
-The value never appears in an SDK definition,
-a workshop definition,
-or anything else that ships with the SDK or the project.
+Neither the SDK definition nor the workshop definition
+needs to contain the value,
+and neither does anything else that ships with the SDK or the project.
 
 The interface splits the job between the two people involved.
 The SDK author knows that the SDK needs a credential,
@@ -208,7 +208,8 @@ A long-running service receives the value as a systemd credential.
 Every workshop runs a secret socket,
 and runtime hooks get its path in :envvar:`SDK_SYSTEMD_SECRET_SOCKET`.
 A hook that installs a unit
-names the credential after the secret
+names the credential :samp:`<SDK>.<PLUG>`,
+here :samp:`secret-demo.api-key`,
 and points it at that socket:
 
 .. code-block:: none
@@ -231,7 +232,16 @@ systemd starts the unit with an empty credential,
 and the cause is logged in the :samp:`workshop-secret@` journal.
 This lets a service start without the secret
 and decide for itself how to handle the missing value.
-For a worked example, see :ref:`how_use_secrets`.
+
+Expect an empty credential on the first start after a launch or a refresh.
+|ws_markup| runs each SDK's :samp:`setup-base` hook
+before the plug is connected:
+at launch, the user hasn't connected it yet,
+and at refresh, |ws_markup| restores the connection only after the hook.
+A service that the hook starts therefore gets an empty credential on that first start.
+Give its unit a restart policy,
+or restart it once the plug is connected;
+:ref:`how_use_secrets` shows both.
 
 
 Request records
