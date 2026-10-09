@@ -134,7 +134,7 @@ or through a :samp:`connections:` entry in the workshop definition,
 and only when that plug's endpoint
 is a loopback address or a Unix domain socket.
 Other pairings have to be connected manually
-with :command:`workshop connect`.
+with :command:`workshop connect`.
 The endpoint syntax accepts shorthand forms,
 including bare port numbers and unix socket paths.
 See :ref:`ref_tunnel_interface` for the full grammar.
