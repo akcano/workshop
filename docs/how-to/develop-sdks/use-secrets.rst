@@ -383,7 +383,7 @@ This is not process-level isolation.
 
 
 Allow a user-supplied value for one invocation
-------------------------------------------------
+----------------------------------------------
 
 Users can pass a value from their calling environment
 to one :command:`workshop exec` or :command:`workshop run` invocation:
