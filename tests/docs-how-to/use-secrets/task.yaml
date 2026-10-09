@@ -1,4 +1,4 @@
-summary: Verify the secrets SDK how-to end-to-end
+summary: Verify the SDK secret consumption patterns
 prepare: |
   . "$TESTSLIB"/utils.sh
   . "$TESTSLIB"/secret-service.sh

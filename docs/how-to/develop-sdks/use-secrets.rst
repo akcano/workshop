@@ -1,11 +1,9 @@
 .. _how_use_secrets:
 
 .. meta::
-   :description: How-to guide on consuming a credential in an SDK
-                 through a secret plug: requesting it on demand
-                 with workshopctl get-secret, passing it to a tool,
-                 or receiving it in a systemd service,
-                 covering failures, request records, and exposure limits.
+   :description: How-to guide for SDK authors on consuming credentials through
+                 secret plugs, including on-demand helpers, command wrappers,
+                 systemd credentials, failure handling, and exposure limits.
 
 How to use secrets in an SDK
 ============================
@@ -18,27 +16,36 @@ How to use secrets in an SDK
 An SDK that needs a credential at runtime,
 such as an API key,
 declares a :samp:`secret` plug.
-After the plug is connected to a :samp:`secret` slot,
-|ws_markup| looks the value up through that slot
-whenever the SDK asks for it,
-so the SDK doesn't need to ship or store the value.
+After a user connects the plug to a secret slot,
+the SDK can request the value when it is needed
+without shipping or storing the value itself.
+
+Use this guide to add one of the supported delivery patterns
+to an existing SDK.
+For the user-facing keyring, slot, and connection steps,
+see :ref:`how_provide_secrets`.
+
 
 Prerequisites
 -------------
 
 Before starting, ensure you have these requirements satisfied:
 
-- |sdk_markup| installed from the :samp:`latest/edge` snap channel,
-  which includes :samp:`secret` plug support.
+- An existing |sdk_markup| project
+  built with a version that supports :samp:`secret` plugs.
 
-- A desktop session that runs a keyring service
-  implementing the freedesktop.org Secret Service,
-  such as GNOME Keyring.
+- A command, tool, or systemd service in the SDK
+  that needs a credential at runtime.
 
-- The :program:`secret-tool` utility,
-  shipped in the :samp:`libsecret-tools` package on Ubuntu.
+- A test workshop in which the SDK's secret plug can be connected.
+  Follow :ref:`how_provide_secrets`
+  to configure a test item, slot, and connection.
 
-Choose how the SDK receives the value by what consumes it:
+
+Choose how the SDK receives the value
+-------------------------------------
+
+Choose the delivery mechanism based on what consumes the credential:
 
 .. list-table::
    :header-rows: 1
@@ -48,21 +55,28 @@ Choose how the SDK receives the value by what consumes it:
      - Mechanism
      - Why
 
-   * - A command the user runs
+   * - A tool with a credential-helper setting
      - :command:`workshopctl get-secret`,
-       called from a credential helper, a pipe, or a wrapper
-     - The value is fetched only when the tool needs it
-       and goes only to the process that asked
+       called directly by the tool
+     - The tool requests the value only when needed
+       without putting it in the tool's environment
+
+   * - A command that reads standard input
+     - Pipe from :command:`workshopctl get-secret`
+     - The value can stay out of the command's environment
+
+   * - A command that requires an environment variable
+     - An SDK-supplied wrapper
+     - The variable exists only in the wrapper and the process it starts
 
    * - A long-running systemd service
-     - :samp:`LoadCredential=` in the service's unit
-     - systemd requests the value on every start
-       and, if available, gives the service a private file
+     - :samp:`LoadCredential=` in the service unit
+     - systemd requests the value on each start
+       and makes it available as a credential file
 
-   * - A value the user picks for a single run
-     - Nothing the SDK depends on
-     - Users pass it with :option:`!--env` themselves;
-       the SDK must work without it
+   * - A value the user chooses for one invocation
+     - The user's :option:`!--env` argument
+     - The SDK remains usable without depending on user-specific state
 
 
 .. warning::
@@ -73,161 +87,71 @@ Choose how the SDK receives the value by what consumes it:
    so a value written there outlives the moment it was needed.
 
 
-Set up the demo SDK
--------------------
+Declare a secret plug
+---------------------
 
-The examples build a minimal SDK named :samp:`secret-demo`.
-Create a disposable project for the walkthrough,
-remove the generated hook stubs,
-and create the directory for its files:
-
-.. code-block:: console
-
-   $ mkdir secret-demo
-   $ cd secret-demo
-   $ sdkcraft init
-   $ rm -f hooks/*
-   $ mkdir -p files/bin
-
-
-Replace :file:`sdkcraft.yaml` with this complete definition:
+Add a :samp:`secret` plug to :file:`sdkcraft.yaml`.
+The plug has a name and an interface,
+but no lookup attributes or value:
 
 .. code-block:: yaml
    :caption: sdkcraft.yaml
-   :emphasize-lines: 11-18
 
    name: secret-demo
-   version: "0.1"
-   summary: Demonstrate Workshop secret delivery
-   description: |
-     Minimal SDK used to demonstrate how commands and services
-     receive credentials from Workshop.
-   license: GPL-3.0
-   platforms:
-     ubuntu@24.04:amd64:
-
-   parts:
-     secret-demo:
-       plugin: dump
-       source: files
-
+   # ...
    plugs:
      api-key:
        interface: secret
 
 
-Create a tool that reports whether it received an API key
-without printing the key itself:
-
-.. code-block:: shell
-   :caption: files/bin/secret-demo-tool
-
-   #!/usr/bin/bash
-   if [[ -z "${SECRET_DEMO_API_KEY:-}" ]]; then
-     echo "secret-demo-tool: no API key" >&2
-     exit 1
-   fi
-
-   printf 'secret-demo-tool: authenticated with a %d-character key\n' \
-     "${#SECRET_DEMO_API_KEY}"
-
-
-Make the tool executable:
-
-.. code-block:: console
-
-   $ chmod +x files/bin/secret-demo-tool
-
-
-The plug's behavior shapes the rest of the SDK:
-
-- |ws_markup| never connects a :samp:`secret` plug automatically,
-  so every user has to connect it explicitly,
-  and the SDK must cope with a plug that isn't connected yet.
-
-- The slot that names the keyring item
-  belongs to the user's workshop definition, not to the SDK.
-  Tell users which plug to connect and what credential it expects,
-  and point them to :ref:`how_provide_secrets` for the steps.
-
-- Inside the workshop,
-  the secret is identified as :samp:`<SDK>.<PLUG>`,
-  the SDK's name and the plug's name joined by a dot:
-  here, :samp:`secret-demo.api-key`.
-
-
-Try the SDK in a test workshop
-------------------------------
-
-Build the SDK into the try area:
-
-.. code-block:: console
-
-   $ sdkcraft try
-
-
-Store a test credential in your host keyring
-under the attributes that the test slot below uses:
-
-.. code-block:: console
-
-   $ secret-tool store --label="secret-demo test key" --collection=default service secret-demo account test
-
-
-When :program:`secret-tool` prompts for the value,
-enter :samp:`not-a-real-secret-value`.
-This is a 23-byte ASCII test string, not a real credential.
-
-Then add the SDK to a test workshop
-next to a :samp:`system` slot that points at that credential:
-
-.. code-block:: yaml
-   :caption: workshop.yaml
-
-   name: dev
-   base: ubuntu@24.04
-   sdks:
-     - name: system
-       slots:
-         demo-key:
-           interface: secret
-           attributes:
-             service: secret-demo
-             account: test
-     - name: try-secret-demo
-
-
-Launch the workshop.
-The SDK keeps its own name inside the workshop,
-so its plug is listed without the :samp:`try-` prefix,
-and it starts out unconnected:
-
-.. code-block:: console
-
-   $ workshop launch
-   $ workshop connections dev
-
-     INTERFACE  PLUG                     SLOT                 NOTES
-     secret     -                        dev/system:demo-key  -
-     secret     dev/secret-demo:api-key  -                    -
-
-
-Request the secret
-------------------
+Only regular SDKs can declare secret plugs.
+Secret slots belong to the :samp:`system` SDK
+and are added by the user in the workshop definition.
 
 Inside the workshop,
-:command:`workshopctl get-secret` requests the value
-of a connected :samp:`secret` plug
-and writes it to standard output;
-the integrations below build on it.
-Nothing is fetched in advance:
-|ws_markup| looks the value up through the connected slot
-only when a process makes the request,
-returns it only to that process,
-and keeps no copy in the workshop.
+the request identifier is :samp:`{SDK}.{PLUG}`;
+for an SDK named :samp:`secret-demo`
+with the plug above,
+the identifier is :samp:`secret-demo.api-key`.
 
-Request the value before connecting the plug
-to see what the SDK gets when the secret is unavailable:
+|ws_markup| never connects a secret plug automatically.
+Document the plug name and the credential it expects
+so users know which slot to create and connect.
+The SDK must also handle the plug being unconnected
+or the lookup failing.
+
+
+Request a secret on demand
+--------------------------
+
+Run :command:`workshopctl get-secret <SDK>.<PLUG>`
+inside the workshop to request a connected secret:
+
+.. code-block:: console
+
+   $ workshopctl get-secret <SDK>.<PLUG>
+
+
+The command writes the value to standard output.
+Capture or pipe that output directly into the consuming tool;
+do not print it to a terminal or log.
+
+For example,
+the following check counts a deterministic 23-byte test value
+without displaying it:
+
+.. code-block:: console
+
+   $ workshop exec dev -- sh -c 'workshopctl get-secret secret-demo.api-key | wc -c'
+
+     23
+
+
+When a request fails,
+:program:`workshopctl` writes a short diagnostic to standard error
+and exits with a status that identifies the failure.
+For example,
+an unconnected plug returns status 3:
 
 .. code-block:: console
 
@@ -236,110 +160,60 @@ to see what the SDK gets when the secret is unavailable:
      secret plug "secret-demo.api-key" is not connected
 
 
-The message on standard error names the plug and the cause,
-and the exit status tells the causes apart:
-for example, 3 means that the plug isn't connected,
-and 2 that the keyring is locked.
-The :command:`workshopctl get-secret` reference lists every status.
+The :ref:`workshopctl get-secret reference <ref_workshopctl__cli>`
+lists every exit status.
+Branch on the status when the SDK needs to distinguish
+an unavailable provider, a missing item, multiple matches,
+or an unconnected plug.
 
-Connect the plug and request the value again,
-counting its bytes instead of printing it:
+Every request also creates a :samp:`Retrieve secret` change.
+The change and its tasks record whether delivery succeeded and why it failed,
+but never contain the value.
+Use :command:`workshop changes` and :command:`workshop tasks`
+to troubleshoot an integration that hides the immediate error.
 
-.. code-block:: console
-
-   $ workshop connect dev/secret-demo:api-key dev/system:demo-key
-   $ workshop exec dev -- sh -c 'workshopctl get-secret secret-demo.api-key | wc -c'
-
-     23
-
-
-Each request creates a recent record without the value.
-|ws_markup| runs it as a change named after the plug,
-so :command:`workshop changes` lists retained requests,
-when it happened, and whether it succeeded:
-
-.. code-block:: console
-
-   $ workshop changes
-
-     ID  STATUS  SPAWN               READY               SUMMARY
-     ...
-     2   Done    today at 11:58 UTC  today at 11:58 UTC  Execute command "workshopctl"
-     3   Error   today at 11:58 UTC  today at 11:58 UTC  Retrieve secret "dev/secret-demo:api-key"
-     4   Done    today at 11:58 UTC  today at 11:58 UTC  Connect dev/secret-demo:api-key
-     5   Done    today at 11:58 UTC  today at 11:58 UTC  Execute command "sh"
-     6   Done    today at 11:58 UTC  today at 11:58 UTC  Retrieve secret "dev/secret-demo:api-key"
-
-
-A :samp:`Done` change delivered the value to the process that asked;
-an :samp:`Error` change didn't.
-For a failed request,
-:command:`workshop tasks` with the change's ID shows the cause:
-
-.. code-block:: console
-
-   $ workshop tasks 3
-
-     STATUS  DURATION  SUMMARY
-     Error       41ms  Retrieve secret "dev/secret-demo:api-key"
-
-     ......................................................................
-     Retrieve secret "dev/secret-demo:api-key"
-
-     2026-10-09T11:58:40Z ERROR getting secret value for sdk "secret-demo" and plug "api-key" in workshop "dev": plug is not connected
-
-
-These changes and their tasks are recent troubleshooting history,
+These records are recent troubleshooting history,
 not a durable audit trail.
-Ready changes are normally pruned after about 24 hours
+Ready changes are normally pruned after about 24 hours,
 and older records can be removed sooner
-when the project retains more than 500 ready changes.
-While the record is retained,
-it remains available even when an integration doesn't pass the error
-on to the user.
+when the daemon holds more than 500 ready changes.
 
 
-Pass the secret to a tool
--------------------------
+Use a tool-native credential helper
+-----------------------------------
 
-How the SDK hands the value to a tool
-depends on how the tool accepts a credential.
-In order of preference:
+Prefer a tool-native credential helper when one is available.
+Configure the helper to run:
 
-- **A credential helper.**
-  If the tool can run a command to obtain its credential,
-  configure it to call :command:`workshopctl get-secret`.
-  The tool then requests the value only when it needs it,
-  and the value never enters its environment.
-  The `Claude Code SDK <https://github.com/canonical/claude-code-sdk/>`_
-  uses Claude Code's :samp:`apiKeyHelper` for this purpose.
+.. code-block:: console
 
-- **Standard input.**
-  If the tool reads the credential from standard input,
-  pipe the output of :command:`workshopctl get-secret` into it.
-
-- **An environment variable.**
-  If the tool reads the credential only from an environment variable,
-  wrap the tool in a script that sets the variable for that tool alone.
-  The `Copilot SDK <https://github.com/canonical/copilot-sdk/>`_
-  uses a wrapper for its token.
-
-Whichever you choose,
-capture the value in a variable or a pipe
-instead of echoing it, exporting it from a shell profile,
-or writing it to a file,
-and keep shell tracing (:samp:`set -x`) out of the script,
-because it prints assignments, values included.
+   $ workshopctl get-secret <SDK>.<PLUG>
 
 
-Wrap a tool that reads an environment variable
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The tool controls when it calls the helper
+and how long it retains the returned value.
+The value does not need to enter the tool's environment.
 
-A wrapper requests the secret each time it runs
-and passes it to the tool,
-without exporting it to the calling shell.
-This wrapper runs :file:`bin/secret-demo-tool`
-with the key in :envvar:`SECRET_DEMO_API_KEY`:
+For example,
+the `Claude Code SDK <https://github.com/canonical/claude-code-sdk/>`_
+uses Claude Code's :samp:`apiKeyHelper`.
+
+If the tool accepts the credential on standard input instead,
+pipe the command output directly into the tool.
+Keep shell tracing such as :samp:`set -x` disabled,
+because it can print assignments and command substitutions.
+
+
+Wrap a tool that requires an environment variable
+-------------------------------------------------
+
+When a tool reads its credential only from an environment variable,
+ship a wrapper that requests the value
+and exports it only for the tool process.
+
+The following wrapper starts :file:`bin/secret-demo-tool`
+with :envvar:`SECRET_DEMO_API_KEY`.
+A value already supplied by the user takes precedence:
 
 .. code-block:: shell
    :caption: files/bin/secret-demo
@@ -359,34 +233,27 @@ with the key in :envvar:`SECRET_DEMO_API_KEY`:
    exec "$sdk_dir/bin/secret-demo-tool" "$@"
 
 
-When the request fails,
-:command:`workshopctl get-secret` already prints a message
-that names the plug and the cause,
-so the wrapper doesn't add its own or exit;
-it starts the tool without the key,
-and the tool can fall back to its own login
-or report the missing key.
-To treat causes differently,
-for example to stay silent about an unconnected plug
-because the tool has another way to log in,
-branch on the exit status of :command:`workshopctl get-secret`.
+If the request fails,
+:command:`workshopctl get-secret` already writes the diagnostic.
+The wrapper starts the tool without the variable,
+allowing the tool to use another login mechanism
+or report that the credential is missing.
 
-This example deliberately leaves standard error connected
-so a failed lookup gives the user an immediate diagnostic
-without exposing the secret.
-An SDK that intentionally prefers a silent fallback
-can redirect only that request with :samp:`2>/dev/null`;
-the recent :samp:`Retrieve secret` change and its tasks
-remain available for troubleshooting while Workshop retains them.
+If a silent fallback is intentional,
+redirect standard error only for the request:
 
-Make the wrapper executable:
+.. code-block:: shell
 
-.. code-block:: console
-
-   $ chmod +x files/bin/secret-demo
+   if key=$(workshopctl get-secret secret-demo.api-key 2>/dev/null); then
+     export SECRET_DEMO_API_KEY="$key"
+   fi
 
 
-Put the wrapper on the :envvar:`PATH` from the :samp:`setup-base` hook:
+The corresponding :samp:`Retrieve secret` change
+remains available for troubleshooting while |ws_markup| retains it.
+
+Install the wrapper on :envvar:`PATH`
+from the SDK's :samp:`setup-base` hook:
 
 .. code-block:: shell
    :caption: hooks/setup-base
@@ -397,31 +264,9 @@ Put the wrapper on the :envvar:`PATH` from the :samp:`setup-base` hook:
    PROFILE
 
 
-Make the hook executable:
-
-.. code-block:: console
-
-   $ chmod +x hooks/setup-base
-
-
-The test workshop still runs the earlier build,
-so build the SDK again
-and refresh the workshop to install the new build.
-The plug stays connected:
-
-.. code-block:: console
-
-   $ sdkcraft try
-   $ workshop refresh
-   $ workshop connections dev
-
-     INTERFACE  PLUG                     SLOT                 NOTES
-     secret     dev/secret-demo:api-key  dev/system:demo-key  manual
-
-
-With the plug connected,
-the tool receives the key,
-and the calling shell doesn't:
+With a connected plug,
+verify that the tool receives the variable
+without exporting it to the calling shell:
 
 .. code-block:: console
 
@@ -431,35 +276,21 @@ and the calling shell doesn't:
      after: <unset>
 
 
-Without the plug,
-the message from :command:`workshopctl get-secret` comes first,
-then the tool's own:
-
-.. code-block:: console
-
-   $ workshop disconnect dev/secret-demo:api-key
-   $ workshop exec dev -- secret-demo
-
-     secret plug "secret-demo.api-key" is not connected
-     secret-demo-tool: no API key
+Also test the unavailable path
+by disconnecting the plug or locking the provider.
+The wrapper must not turn a failed lookup into a success-shaped result.
 
 
-Reconnect the plug before continuing:
+Deliver a secret to a systemd service
+-------------------------------------
 
-.. code-block:: console
+Use a systemd credential for a long-running service.
+The service reads the credential from the file
+named after it in :envvar:`CREDENTIALS_DIRECTORY`.
 
-     $ workshop connect dev/secret-demo:api-key dev/system:demo-key
-
-
-Receive the secret in a systemd service
----------------------------------------
-
-For a long-running service,
-let systemd request the secret when it starts the service.
-The service reads the value from the file named after the credential
-in :envvar:`CREDENTIALS_DIRECTORY`,
-and stops when the file is missing or empty;
-:samp:`sleep infinity` stands in for the service's own process:
+For example,
+this service process rejects a missing or empty credential
+before starting its long-running work:
 
 .. code-block:: shell
    :caption: files/bin/secret-demo-service
@@ -475,21 +306,9 @@ and stops when the file is missing or empty;
    exec sleep infinity
 
 
-Make the service executable:
-
-.. code-block:: console
-
-   $ chmod +x files/bin/secret-demo-service
-
-
-Replace :file:`hooks/setup-base` with this complete hook.
-It keeps the wrapper on :envvar:`PATH`
-and installs the service as a systemd system unit.
-The hook runs as :samp:`root`
-and has :envvar:`SDK_SYSTEMD_SECRET_SOCKET` set
-to the workshop's secret socket.
-The unit runs the service as the :samp:`workshop` user
-and names the credential :samp:`<SDK>.<PLUG>`:
+Install the unit from :samp:`setup-base`.
+Runtime hooks receive :envvar:`SDK_SYSTEMD_SECRET_SOCKET`,
+which is the socket systemd uses to request the value:
 
 .. code-block:: shell
    :caption: hooks/setup-base
@@ -518,136 +337,118 @@ and names the credential :samp:`<SDK>.<PLUG>`:
    systemctl enable --now secret-demo.service
 
 
-The request happens only when systemd starts the unit:
-the :samp:`LoadCredential=` entry makes systemd connect to the secret socket,
-and for each connection a :samp:`workshop-secret@` service
-looks the value up the same way :command:`workshopctl get-secret` does.
+Each service start causes systemd to request the value again.
+If the plug is unconnected or the lookup fails,
+systemd still starts the unit with an empty credential.
+Let the service reject that state,
+and configure a restart policy or restart it after fixing the lookup.
 
-Build the SDK again and refresh the workshop.
-The :samp:`setup-base` hook runs before the workshop reconnects the plug,
-so the service's first start gets an empty credential and stops;
-:samp:`Restart=on-failure` starts it again 30 seconds later,
-and that start receives the value:
+Connection timing depends on the workshop runtime:
 
-.. code-block:: console
+- On initial launch,
+  the service can start before the user connects the plug.
 
-   $ sdkcraft try
-   $ workshop refresh
-   $ workshop exec dev -- systemctl is-active secret-demo.service
+- During an LXD container refresh,
+  an updated SDK's :samp:`setup-base` hook runs
+  before |ws_markup| restores preserved connections.
+  The first service start can therefore receive an empty credential.
 
-     activating
-
-   $ sleep 30
-   $ workshop exec dev -- systemctl is-active secret-demo.service
-
-     active
+- A VM refresh does not restore interface connections.
+  The user must reconnect the plug
+  before a restarted service can receive the credential.
 
 
-An active service has received a nonempty credential in this example.
-Whenever the plug isn't connected or the lookup fails,
-systemd still starts the service, with an empty credential;
-the service's check then exits,
-and :samp:`Restart=on-failure` schedules another attempt.
-After you connect the plug or fix the lookup,
-the next attempt receives the value;
-to request it right away, restart the service:
+To request the value immediately after connecting the plug
+or correcting the lookup,
+restart the service:
 
 .. code-block:: console
 
    $ workshop exec dev -- sudo systemctl restart secret-demo.service
 
 
-To find out why the service has no value,
-check the service's journal and the :samp:`workshop-secret@` journal,
-which records each request and its error:
+Inspect both the service journal
+and the :samp:`workshop-secret@` journal when delivery fails:
 
 .. code-block:: console
 
    $ workshop exec dev -- sudo journalctl --no-pager -u secret-demo.service -u 'workshop-secret@*'
 
-     ...
-     Oct 09 12:00:20 dev workshopctl[544]: processed systemd load credential request for unit "secret-demo.service", "secret-demo" SDK and secret "api-key"
-     Oct 09 12:00:21 dev workshopctl[544]: secret plug "secret-demo.api-key" is not connected
-     Oct 09 12:00:21 dev systemd[1]: workshop-secret@1-543-0.service: Deactivated successfully.
-     Oct 09 12:00:21 dev secret-demo-service[542]: secret-demo-service: no API key in the secret-demo.api-key credential
-     Oct 09 12:00:21 dev systemd[1]: secret-demo.service: Main process exited, code=exited, status=1/FAILURE
+
+The credential lives in a systemd-managed file
+for as long as the service runs.
+The unit's user and root can read it;
+other processes running as the same user can also read the file.
+This is not process-level isolation.
 
 
-Each start also leaves a :samp:`Retrieve secret` change
-in :command:`workshop changes`;
-for an unconnected plug, the change ends in :samp:`Error`
-even though systemd started the service.
-Follow :ref:`how_provide_secrets` to fix the reported cause,
-then restart the service.
+Allow a user-supplied value for one invocation
+------------------------------------------------
 
-
-Leave one-off values to users
------------------------------
-
-Users can pass a value to a single command themselves
-with :option:`!--env` on :command:`workshop exec` or :command:`workshop run`,
-naming a variable whose value is inherited from their calling environment.
-An inherited name that isn't set
-is skipped without an error.
-
-The SDK must not depend on this path.
-The wrapper above lets a value from the environment take precedence,
-and falls back to the plug when the variable is absent,
-so an inherited name that isn't set doesn't break it:
+Users can pass a value from their calling environment
+to one :command:`workshop exec` or :command:`workshop run` invocation:
 
 .. code-block:: console
 
-   $ unset SECRET_DEMO_API_KEY
    $ workshop exec --env SECRET_DEMO_API_KEY dev -- secret-demo
 
-     secret-demo-tool: authenticated with a 23-character key
+
+Design the SDK so this remains an optional override.
+The wrapper above gives an existing environment value precedence
+and falls back to the connected plug when it is absent.
+If the named variable is unset,
+|ws_markup| skips it without an error.
+
+Do not ask users to type the value itself into an argument.
+They should pass only the variable name;
+the value then comes from the environment
+of the :program:`workshop` command.
 
 
-Know the exposure limits
-------------------------
+Review the exposure limits
+--------------------------
 
-Each mechanism keeps the value out of SDK content,
-but the value is still readable somewhere while it's in use,
-and some of that is beyond the SDK's control:
+Each delivery mechanism keeps the value out of SDK content,
+but the value remains readable somewhere while it is in use:
 
 .. list-table::
    :header-rows: 1
    :widths: 2 4 4
 
    * - Mechanism
-     - What lives on, and who can read it
-     - What the SDK can't clean up
+     - What can read the value
+     - What the SDK cannot clean up
 
-   * - Tool-native helper
-     - The tool receives the value when it calls the helper.
-       An on-demand helper can avoid putting it in the tool's environment.
-     - The tool controls how long it keeps the value
-       and whether its child processes can access it;
-       a connected plug remains available to other commands
-       in the workshop.
+   * - Tool-native helper or standard input
+     - The process that consumes the command output
+       and anything to which that process passes it
+     - While the plug is connected,
+       any process in the workshop can make a new request
 
    * - Command wrapper
-     - The value lives in the tool's environment for that run;
-       the tool and every process it starts can read it.
-       Nothing is written to disk,
-       and the calling shell never holds it.
+     - The tool and every process it starts,
+       through the tool's environment
      - While the plug is connected,
-       any command in the workshop can request the value
-       with :command:`workshopctl get-secret`.
+       any process in the workshop can request the value
+       with :command:`workshopctl get-secret`
 
-   * - Service credential
-     - The value lives in a file under :file:`/run/credentials/`
-       that only the service's user and :samp:`root` can read,
-       for as long as the service runs;
-       systemd removes the file when the service stops.
-       It isn't in the service's environment.
-     - Processes running as the service's user can read the file
-       while the service runs.
+   * - Systemd credential
+     - The unit's user, root,
+       and other processes running as that user
+     - The credential file remains available
+       until systemd stops the service
 
    * - User-supplied value
-     - The value lives in the environment of that one invocation.
-     - A variable that the user's shell or direnv exports
-       stays available to every command they run there.
+     - The command and every process it starts
+     - A variable exported by the user's shell or direnv
+       stays available to every command run from that environment
+
+
+Disconnecting a plug prevents new requests,
+but it cannot withdraw a value
+that a process has already received.
+Document this limitation for users,
+especially when the SDK can run autonomous tools.
 
 
 See also
