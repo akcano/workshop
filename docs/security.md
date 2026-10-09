@@ -71,7 +71,7 @@ only to the SDKs that require it. Another example is avoiding the connection of
 sensitive interfaces, such as the SSH agent, unless absolutely necessary.
 
 To handle sensitive data in your SDKs, use the
-[secret interface](https://ubuntu.com/workshop/docs/explanation/interfaces/secret-interface/)
+{ref}`secret interface <exp_secret_interface>`
 for access tokens kept in the host keyring, environment variables of a single
 Workshop command for one-off values, or the
 [SSH interface](https://ubuntu.com/workshop/docs/explanation/interfaces/ssh-interface/)
@@ -121,7 +121,7 @@ autonomy:
     lets any process in the workshop authenticate with the identities in your
     host's SSH agent while it's connected.
   * The
-    [secret interface](https://ubuntu.com/workshop/docs/explanation/interfaces/secret-interface/)
+    {ref}`secret interface <exp_secret_interface>`
     lets any process in the workshop request the credential from your host
     keyring while it's connected.
   * [Mounts](https://ubuntu.com/workshop/docs/explanation/interfaces/mount-interface/)
@@ -192,7 +192,9 @@ User‑exposed crypto and providers
 allowing tools inside the container to authenticate without copying private keys.
 - Secret interface: reads a credential from the host keyring through the freedesktop.org Secret Service
 on the user's D-Bus session bus each time a process in the workshop requests it,
-and returns it only to that process; Workshop keeps no copy.
+and returns it only to that process.
+Workshop doesn't persist the value;
+it handles the value only transiently while fulfilling the request.
 The Secret Service session uses the `plain` algorithm, so the value isn't encrypted on that local bus.
 - SSH host trust: a per-user Ed25519 certificate authority signs a host certificate for every
 workshop and a user certificate for connecting to them, so SSH clients trust any CA-signed

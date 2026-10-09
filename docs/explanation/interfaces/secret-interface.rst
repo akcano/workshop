@@ -37,7 +37,8 @@ Secret interface plug
 A :samp:`secret` plug declares that the SDK needs one credential.
 Only regular SDKs can declare it;
 the :ref:`system SDK <exp_system_sdk>` can't.
-The plug takes any valid plug name and carries no attributes,
+The plug takes any valid plug name
+and carries no attributes,
 so it describes the need, not the value or where to find it:
 
 .. code-block:: yaml
@@ -111,7 +112,7 @@ so listing the pair in the workshop definition's :samp:`connections`
 doesn't connect it either;
 see :ref:`exp_interface_auto_connection`.
 Users connect and disconnect the plug
-with :command:`workshop connect` and :command:`workshop disconnect`:
+with :command:`workshop connect` and :command:`workshop disconnect`:
 
 .. @artefact workshop connect
 .. @artefact workshop disconnect
@@ -139,10 +140,10 @@ Connecting reads nothing from the keyring
 and puts nothing in the workshop;
 it only permits later requests.
 
-A :command:`workshop refresh` keeps the connection,
+A :command:`workshop refresh` keeps the connection,
 including a refresh that changes the slot's attributes,
 so a corrected lookup takes effect without reconnecting.
-A :command:`workshop restore` drops it, like any manual connection,
+A :command:`workshop restore` drops it, like any manual connection,
 and so does a refresh that removes the plug from the SDK
 or the slot from the workshop definition;
 see :ref:`exp_workshop_connection_lifecycle`.
@@ -157,7 +158,8 @@ Nothing is fetched in advance.
 |ws_markup| looks the value up in the host keyring
 each time a process in the workshop requests it,
 and hands it only to that process.
-Neither the workshop nor |ws_markup| keeps a copy.
+|ws_markup| doesn't persist the value;
+it handles the value only transiently while fulfilling the request.
 
 Because every request is a fresh lookup,
 the keyring stays in control:
@@ -178,7 +180,7 @@ Command requests
 
 .. @artefact workshopctl get-secret
 
-A command runs :command:`workshopctl get-secret <SDK>.<PLUG>`,
+A command runs :command:`workshopctl get-secret <SDK>.<PLUG>`,
 typically from a wrapper script that the SDK ships.
 :program:`workshopctl` passes the request to |ws_markup| on the host,
 which checks that the plug is connected,
@@ -188,7 +190,8 @@ and returns the value.
 so the value goes only to the process that reads that output.
 
 When the request fails,
-:program:`workshopctl` prints a short message that names the plug and the cause,
+:program:`workshopctl` prints a short message
+that names the plug and the cause,
 and its exit status tells the causes apart:
 an unconnected plug, a locked keyring,
 no matching item or several of them,
@@ -224,7 +227,8 @@ A :samp:`workshop-secret@` service accepts the connection,
 requests the value of :samp:`secret-demo.api-key` the same way a command does,
 and returns it to systemd,
 which places it in the unit's credentials directory.
-The request happens on every start of the unit, and only then.
+The request happens on every start of the unit,
+and only then.
 
 A failed request doesn't stop the unit:
 whether the plug isn't connected or the lookup fails,
@@ -234,11 +238,14 @@ This lets a service start without the secret
 and decide for itself how to handle the missing value.
 
 Expect an empty credential on the first start after a launch or a refresh.
-|ws_markup| runs each SDK's :samp:`setup-base` hook
-before the plug is connected:
-at launch, the user hasn't connected it yet,
-and at refresh, |ws_markup| restores the connection only after the hook.
-A service that the hook starts therefore gets an empty credential on that first start.
+At launch,
+a service can start before the user has connected the plug.
+During a refresh,
+intact SDK services restart with the workshop,
+and updated SDKs run their :samp:`setup-base` hooks,
+before |ws_markup| restores preserved connections.
+A service that starts in either situation
+therefore gets an empty credential on that first start.
 Give its unit a restart policy,
 or restart it once the plug is connected;
 :ref:`how_use_secrets` shows both.
@@ -287,7 +294,8 @@ as compared in :ref:`how_use_secrets`.
 Disconnect the plug when you don't need the secret,
 especially before an autonomous coding agent starts working in the workshop.
 Disconnecting stops new requests,
-but it can't withdraw a value that a process has already received.
+but it can't withdraw a value
+that a process has already received.
 
 
 See also
