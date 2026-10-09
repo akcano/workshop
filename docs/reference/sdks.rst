@@ -536,7 +536,7 @@ The options :samp:`errexit` and :samp:`pipefail`
 are set by default,
 so most commands which return a nonzero exit code
 cause the hook to exit with the same code.
-If :option:`!--verbose` is passed to :command:`workshop launch` or :command:`workshop refresh`,
+If :option:`!--verbose` is passed to :command:`workshop launch` or :command:`workshop refresh`,
 the option :samp:`xtrace` is also set.
 
 .. note::

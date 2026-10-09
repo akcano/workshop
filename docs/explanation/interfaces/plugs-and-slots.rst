@@ -165,7 +165,7 @@ is a loopback address or a Unix domain socket.
 See :ref:`exp_tunnel_connection` for the full policy.
 
 Interfaces marked No are wired manually
-with :command:`workshop connect`.
+with :command:`workshop connect`.
 
 
 When more than one slot is policy-eligible for the same plug,
