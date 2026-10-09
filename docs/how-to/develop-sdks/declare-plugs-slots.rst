@@ -21,7 +21,7 @@ or expose its own to them.
 The examples cover the :samp:`mount` and :samp:`tunnel` interfaces;
 plugs and slots for the other supported interfaces
 follow the same shape.
-To receive a user's credential through a :samp:`secret` plug,
+To receive a credential through a :samp:`secret` plug,
 see :ref:`how_use_secrets`.
 
 
