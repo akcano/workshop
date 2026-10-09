@@ -10,6 +10,8 @@
 How to use secrets in an SDK
 ============================
 
+.. @tests in tests/docs-how-to/use-secrets/task.yaml
+
 .. @artefact secret interface
 .. @artefact workshopctl get-secret
 
@@ -26,13 +28,15 @@ Prerequisites
 
 Before starting, ensure you have these requirements satisfied:
 
-- A |ws_markup| installation that supports the :samp:`secret` interface.
-- An |sdk_markup| version that accepts :samp:`secret` plugs.
-- Familiarity with :ref:`declaring plugs <how_declare_plugs_slots>`
-  and :ref:`writing runtime hooks <how_write_runtime_hooks>`.
-- A credential in your own host keyring to test with,
-  stored as described in :ref:`how_provide_secrets`.
+- |sdk_markup| installed from the :samp:`latest/edge` snap channel,
+  which includes :samp:`secret` plug support.
 
+- A desktop session that runs a keyring service
+  implementing the freedesktop.org Secret Service,
+  such as GNOME Keyring.
+
+- The :program:`secret-tool` utility,
+  shipped in the :samp:`libsecret-tools` package on Ubuntu.
 
 Choose how the SDK receives the value by what consumes it:
 
@@ -69,24 +73,70 @@ Choose how the SDK receives the value by what consumes it:
    so a value written there outlives the moment it was needed.
 
 
-Declare the secret plug
------------------------
+Set up the demo SDK
+-------------------
 
-The examples use an SDK named :samp:`secret-demo`
-whose tool, :file:`bin/secret-demo-tool`,
-reads an API key from :envvar:`SECRET_DEMO_API_KEY`.
-Add a plug with the :samp:`secret` interface to :file:`sdkcraft.yaml`:
+The examples build a minimal SDK named :samp:`secret-demo`.
+Create a disposable project for the walkthrough,
+remove the generated hook stubs,
+and create the directory for its files:
+
+.. code-block:: console
+
+   $ mkdir secret-demo
+   $ cd secret-demo
+   $ sdkcraft init
+   $ rm -f hooks/*
+   $ mkdir -p files/bin
+
+
+Replace :file:`sdkcraft.yaml` with this complete definition:
 
 .. code-block:: yaml
    :caption: sdkcraft.yaml
-   :emphasize-lines: 1,4-6
+   :emphasize-lines: 11-18
 
    name: secret-demo
-   # ...
+   version: "0.1"
+   summary: Demonstrate Workshop secret delivery
+   description: |
+     Minimal SDK used to demonstrate how commands and services
+     receive credentials from Workshop.
+   license: GPL-3.0
+   platforms:
+     ubuntu@24.04:amd64:
+
+   parts:
+     secret-demo:
+       plugin: dump
+       source: files
 
    plugs:
      api-key:
        interface: secret
+
+
+Create a tool that reports whether it received an API key
+without printing the key itself:
+
+.. code-block:: shell
+   :caption: files/bin/secret-demo-tool
+
+   #!/usr/bin/bash
+   if [[ -z "${SECRET_DEMO_API_KEY:-}" ]]; then
+     echo "secret-demo-tool: no API key" >&2
+     exit 1
+   fi
+
+   printf 'secret-demo-tool: authenticated with a %d-character key\n' \
+     "${#SECRET_DEMO_API_KEY}"
+
+
+Make the tool executable:
+
+.. code-block:: console
+
+   $ chmod +x files/bin/secret-demo-tool
 
 
 The plug's behavior shapes the rest of the SDK:
@@ -94,10 +144,12 @@ The plug's behavior shapes the rest of the SDK:
 - |ws_markup| never connects a :samp:`secret` plug automatically,
   so every user has to connect it explicitly,
   and the SDK must cope with a plug that isn't connected yet.
+
 - The slot that names the keyring item
   belongs to the user's workshop definition, not to the SDK.
   Tell users which plug to connect and what credential it expects,
   and point them to :ref:`how_provide_secrets` for the steps.
+
 - Inside the workshop,
   the secret is identified as :samp:`<SDK>.<PLUG>`,
   the SDK's name and the plug's name joined by a dot:
@@ -121,6 +173,10 @@ under the attributes that the test slot below uses:
 
    $ secret-tool store --label="secret-demo test key" --collection=default service secret-demo account test
 
+
+When :program:`secret-tool` prompts for the value,
+enter :samp:`not-a-real-secret-value`.
+This is a 23-byte ASCII test string, not a real credential.
 
 Then add the SDK to a test workshop
 next to a :samp:`system` slot that points at that credential:
@@ -187,7 +243,7 @@ and 2 that the keyring is locked.
 The :command:`workshopctl get-secret` reference lists every status.
 
 Connect the plug and request the value again,
-counting its characters instead of printing it:
+counting its bytes instead of printing it:
 
 .. code-block:: console
 
@@ -197,9 +253,9 @@ counting its characters instead of printing it:
      23
 
 
-Each request leaves a record without the value.
+Each request creates a recent record without the value.
 |ws_markup| runs it as a change named after the plug,
-so :command:`workshop changes` lists every request,
+so :command:`workshop changes` lists retained requests,
 when it happened, and whether it succeeded:
 
 .. code-block:: console
@@ -233,8 +289,14 @@ For a failed request,
      2026-10-09T11:58:40Z ERROR getting secret value for sdk "secret-demo" and plug "api-key" in workshop "dev": plug is not connected
 
 
-This record stays available
-even when an integration doesn't pass the error on to the user.
+These changes and their tasks are recent troubleshooting history,
+not a durable audit trail.
+Ready changes are normally pruned after about 24 hours
+and older records can be removed sooner
+when the project retains more than 500 ready changes.
+While the record is retained,
+it remains available even when an integration doesn't pass the error
+on to the user.
 
 
 Pass the secret to a tool
@@ -251,9 +313,11 @@ In order of preference:
   and the value never enters its environment.
   The `Claude Code SDK <https://github.com/canonical/claude-code-sdk/>`_
   uses Claude Code's :samp:`apiKeyHelper` for this purpose.
+
 - **Standard input.**
   If the tool reads the credential from standard input,
   pipe the output of :command:`workshopctl get-secret` into it.
+
 - **An environment variable.**
   If the tool reads the credential only from an environment variable,
   wrap the tool in a script that sets the variable for that tool alone.
@@ -307,17 +371,19 @@ for example to stay silent about an unconnected plug
 because the tool has another way to log in,
 branch on the exit status of :command:`workshopctl get-secret`.
 
-Save the wrapper next to the tool,
-in the :file:`files/` directory that the SDK's :samp:`dump` part
-copies into the SDK:
+This example deliberately leaves standard error connected
+so a failed lookup gives the user an immediate diagnostic
+without exposing the secret.
+An SDK that intentionally prefers a silent fallback
+can redirect only that request with :samp:`2>/dev/null`;
+the recent :samp:`Retrieve secret` change and its tasks
+remain available for troubleshooting while Workshop retains them.
 
-.. code-block:: yaml
-   :caption: sdkcraft.yaml
+Make the wrapper executable:
 
-   parts:
-     secret-demo:
-       plugin: dump
-       source: files
+.. code-block:: console
+
+   $ chmod +x files/bin/secret-demo
 
 
 Put the wrapper on the :envvar:`PATH` from the :samp:`setup-base` hook:
@@ -325,9 +391,17 @@ Put the wrapper on the :envvar:`PATH` from the :samp:`setup-base` hook:
 .. code-block:: shell
    :caption: hooks/setup-base
 
+   #!/usr/bin/bash
    cat >/etc/profile.d/secret-demo.sh <<PROFILE
    export PATH="${SDK}/bin:\$PATH"
    PROFILE
+
+
+Make the hook executable:
+
+.. code-block:: console
+
+   $ chmod +x hooks/setup-base
 
 
 The test workshop still runs the earlier build,
@@ -370,20 +444,60 @@ then the tool's own:
      secret-demo-tool: no API key
 
 
+Reconnect the plug before continuing:
+
+.. code-block:: console
+
+     $ workshop connect dev/secret-demo:api-key dev/system:demo-key
+
+
 Receive the secret in a systemd service
 ---------------------------------------
 
 For a long-running service,
 let systemd request the secret when it starts the service.
-In the same :samp:`setup-base` hook, install the service as a systemd system unit;
-the hook runs as :samp:`root`
+The service reads the value from the file named after the credential
+in :envvar:`CREDENTIALS_DIRECTORY`,
+and stops when the file is missing or empty;
+:samp:`sleep infinity` stands in for the service's own process:
+
+.. code-block:: shell
+   :caption: files/bin/secret-demo-service
+
+   #!/usr/bin/bash
+   # Reads the API key from a systemd credential, then runs the service.
+   key_file="$CREDENTIALS_DIRECTORY/secret-demo.api-key"
+   if [[ ! -s "$key_file" ]]; then
+     echo "secret-demo-service: no API key in the secret-demo.api-key credential" >&2
+     exit 1
+   fi
+   echo "secret-demo-service: started with a $(wc -c <"$key_file")-byte key"
+   exec sleep infinity
+
+
+Make the service executable:
+
+.. code-block:: console
+
+   $ chmod +x files/bin/secret-demo-service
+
+
+Replace :file:`hooks/setup-base` with this complete hook.
+It keeps the wrapper on :envvar:`PATH`
+and installs the service as a systemd system unit.
+The hook runs as :samp:`root`
 and has :envvar:`SDK_SYSTEMD_SECRET_SOCKET` set
 to the workshop's secret socket.
-Run the service itself as the :samp:`workshop` user,
-and name the credential :samp:`<SDK>.<PLUG>`:
+The unit runs the service as the :samp:`workshop` user
+and names the credential :samp:`<SDK>.<PLUG>`:
 
 .. code-block:: shell
    :caption: hooks/setup-base
+
+   #!/usr/bin/bash
+   cat >/etc/profile.d/secret-demo.sh <<PROFILE
+   export PATH="${SDK}/bin:\$PATH"
+   PROFILE
 
    cat >/etc/systemd/system/secret-demo.service <<UNIT
    [Unit]
@@ -408,25 +522,6 @@ The request happens only when systemd starts the unit:
 the :samp:`LoadCredential=` entry makes systemd connect to the secret socket,
 and for each connection a :samp:`workshop-secret@` service
 looks the value up the same way :command:`workshopctl get-secret` does.
-
-The service reads the value from the file named after the credential
-in :envvar:`CREDENTIALS_DIRECTORY`,
-and stops when the file is missing or empty;
-:samp:`sleep infinity` stands in for the service's own process:
-
-.. code-block:: shell
-   :caption: files/bin/secret-demo-service
-
-   #!/usr/bin/bash
-   # Reads the API key from a systemd credential, then runs the service.
-   key_file="$CREDENTIALS_DIRECTORY/secret-demo.api-key"
-   if [[ ! -s "$key_file" ]]; then
-     echo "secret-demo-service: no API key in the secret-demo.api-key credential" >&2
-     exit 1
-   fi
-   echo "secret-demo-service: started with a $(wc -c <"$key_file")-character key"
-   exec sleep infinity
-
 
 Build the SDK again and refresh the workshop.
 The :samp:`setup-base` hook runs before the workshop reconnects the plug,
