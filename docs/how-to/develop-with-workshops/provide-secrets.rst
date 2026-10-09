@@ -420,6 +420,7 @@ See also
 Explanation:
 
 - :ref:`exp_plugs_slots`
+- :ref:`exp_secret_interface`
 
 
 Reference:
@@ -427,6 +428,7 @@ Reference:
 - :ref:`ref_workshop_changes`
 - :ref:`ref_workshop_connect`
 - :ref:`ref_workshop_connections`
+- :ref:`ref_workshop_definition_interfaces`
 - :ref:`ref_workshop_disconnect`
 - :ref:`ref_workshop_exec`
 - :ref:`ref_workshop_run`
