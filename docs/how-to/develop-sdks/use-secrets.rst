@@ -653,6 +653,11 @@ and some of that is beyond the SDK's control:
 See also
 --------
 
+Explanation:
+
+- :ref:`exp_secret_interface`
+
+
 How-to guides:
 
 - :ref:`how_declare_plugs_slots`
@@ -663,6 +668,7 @@ How-to guides:
 Reference:
 
 - :ref:`ref_workshop_changes`
+- :ref:`ref_workshop_definition_interfaces`
 - :ref:`ref_workshop_exec`
 - :ref:`ref_workshop_run`
 - :ref:`ref_workshop_tasks`
