@@ -110,12 +110,9 @@ func (s *managerSuite) TestResolveWorkshopInstanceIDReturnsIdentity(
 
 	c.Assert(err, check.IsNil)
 	c.Assert(identity, check.NotNil)
+	c.Check(identity.User, check.Equals, "test-user")
 	c.Check(identity.Project, check.DeepEquals, project)
 	c.Check(identity.Workshop, check.Equals, "test-workshop")
-
-	owns, err := s.manager.OwnsWorkshopInstanceID(ctx, "instance-id")
-	c.Assert(err, check.IsNil)
-	c.Check(owns, check.Equals, true)
 }
 
 // TestResolveWorkshopInstanceIDReturnsNilForUnknownID checks that the manager
@@ -134,10 +131,6 @@ func (s *managerSuite) TestResolveWorkshopInstanceIDReturnsNilForUnknownID(
 
 	c.Assert(err, check.IsNil)
 	c.Check(identity, check.IsNil)
-
-	owns, err := s.manager.OwnsWorkshopInstanceID(ctx, "unknown-id")
-	c.Assert(err, check.IsNil)
-	c.Check(owns, check.Equals, false)
 }
 
 // TestResolveWorkshopInstanceIDReturnsNilForEmptyID checks that an empty

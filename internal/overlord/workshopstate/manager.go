@@ -30,6 +30,9 @@ import (
 
 // WorkshopIdentity identifies a workshop within its owning project.
 type WorkshopIdentity struct {
+	// User is the username of the workshop's owner.
+	User string
+
 	// Project is the project containing the workshop.
 	Project workshop.Project
 
@@ -135,37 +138,32 @@ func (w *WorkshopManager) Workshop(ctx context.Context, name, pId string) (*work
 	return workshop, nil
 }
 
-// OwnsWorkshopInstanceID reports whether the user in ctx owns a workshop with
-// the specified backend instance identifier. If ctx does not identify a user,
-// it returns false without an error.
-func (w *WorkshopManager) OwnsWorkshopInstanceID(
-	ctx context.Context,
-	instanceID string,
-) (bool, error) {
-	identity, err := w.ResolveWorkshopInstanceID(ctx, instanceID)
-	return identity != nil, err
-}
-
-// ResolveWorkshopInstanceID finds a workshop owned by the user in ctx with
+// ResolveWorkshopInstanceID finds the workshop owned by the user in ctx with
 // the specified backend instance identifier. It returns nil without an error
 // if the identifier is empty or unknown, or ctx does not identify a user.
 func (w *WorkshopManager) ResolveWorkshopInstanceID(
 	ctx context.Context,
 	instanceID string,
 ) (*WorkshopIdentity, error) {
-	user, ok := ctx.Value(workshop.ContextUser).(string)
+	userCtx := ctx
+	user, ok := ctx.Value(workshop.ContextWorkshopUser).(string)
+	if ok {
+		userCtx = context.WithValue(userCtx, workshop.ContextUser, user)
+	} else {
+		user, ok = ctx.Value(workshop.ContextUser).(string)
+	}
 	if instanceID == "" || !ok || user == "" {
 		return nil, nil
 	}
 
-	projects, err := w.backend.UserProjects(ctx)
+	projects, err := w.backend.UserProjects(userCtx)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, project := range projects {
 		projectCtx := context.WithValue(
-			ctx,
+			userCtx,
 			workshop.ContextProjectId,
 			project.ProjectId,
 		)
@@ -181,6 +179,7 @@ func (w *WorkshopManager) ResolveWorkshopInstanceID(
 		for _, candidate := range workshops {
 			if candidate.InstanceID == instanceID {
 				return &WorkshopIdentity{
+					User:     user,
 					Project:  project,
 					Workshop: candidate.Name,
 				}, nil

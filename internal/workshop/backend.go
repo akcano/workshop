@@ -36,11 +36,15 @@ import (
 
 type ContextKeyProjectId string
 type ContextKeyUser string
+type ContextKeyWorkshopUser string
 type ContextKeyWorkshopInstanceID string
 
 const (
 	ContextProjectId = ContextKeyProjectId("project-id")
 	ContextUser      = ContextKeyUser("user")
+	// ContextWorkshopUser is like ContextUser but the request is coming from a
+	// workshop rather than the user directly.
+	ContextWorkshopUser = ContextKeyWorkshopUser("workshop-user")
 	// ContextWorkshopInstanceID stores the identifier of the workshop instance
 	// from which a request originated.
 	ContextWorkshopInstanceID = ContextKeyWorkshopInstanceID("workshop-instance-id")

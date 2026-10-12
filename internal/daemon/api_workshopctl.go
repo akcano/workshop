@@ -152,7 +152,7 @@ func workshopctlHookContextFromInstanceID(
 	identity, err := c.d.overlord.WorkshopManager().
 		ResolveWorkshopInstanceID(r.Context(), instanceID)
 	if err != nil {
-		logger.Noticef("cannot validate workshop instance ID: %v", err)
+		logger.Noticef("Cannot validate workshop instance ID: %v", err)
 		return nil, statusInternalError("internal error occurred validating workshop instance id")
 	}
 	if identity == nil {
@@ -161,13 +161,12 @@ func workshopctlHookContextFromInstanceID(
 
 	hookContext, err := c.d.overlord.HookManager().NewEphemeralContext()
 	if err != nil {
-		logger.Noticef("cannot create workshop context: %v", err)
+		logger.Noticef("Cannot create workshop context: %v", err)
 		return nil, statusInternalError("internal error occurred")
 	}
-	username, _ := r.Context().Value(workshop.ContextUser).(string)
 	hookContext.SetWorkshopIdentity(hookstate.WorkshopIdentity{
+		User:     identity.User,
 		Project:  identity.Project,
-		User:     username,
 		Workshop: identity.Workshop,
 	})
 	return hookContext, nil
