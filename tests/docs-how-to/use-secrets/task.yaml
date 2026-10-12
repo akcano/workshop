@@ -1,9 +1,9 @@
-summary: Verify the secrets SDK how-to end-to-end
+summary: Verify the SDK secret consumption patterns
 prepare: |
   . "$TESTSLIB"/utils.sh
   . "$TESTSLIB"/secret-service.sh
 
-  install_sdkcraft
+  retry 5 install_sdkcraft
   install_secret_service
   start_secret_service
 restore: |
@@ -103,14 +103,23 @@ execute: |
   echo "Check the service receives the credential"
   workshop_exec exec dev -- \
       sudo systemctl restart secret-demo.service
+  # The unit is Type=simple, so the restart returns before the service
+  # reads its credential and logs; wait for the log line.
+  for _ in $(seq 1 30); do
+      workshop_exec exec dev -- \
+          sudo journalctl --no-pager -u secret-demo.service \
+          > journal.out
+      if grep -q 'secret-demo-service: started with a 23-byte key' \
+          journal.out; then
+          break
+      fi
+      sleep 1
+  done
+  MATCH 'secret-demo-service: started with a 23-byte key' < journal.out
   workshop_exec exec dev -- \
       systemctl is-active secret-demo.service \
       > service.out
   MATCH '^active$' < service.out
-  workshop_exec exec dev -- \
-      sudo journalctl --no-pager -u secret-demo.service \
-      > journal.out
-  MATCH 'secret-demo-service: started with a 23-byte key' < journal.out
 
   echo "Check secret requests appear in recent changes"
   workshop_exec changes > changes.out

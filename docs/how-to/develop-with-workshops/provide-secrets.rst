@@ -56,8 +56,8 @@ so pick one before you start:
 
    * - What persists
      - The value stays in your keyring;
-       the workshop keeps only the connection,
-       which survives refreshes until you disconnect it
+       the workshop keeps the connection across refreshes
+       until you disconnect it or remove an endpoint
      - Nothing; the next command in the workshop doesn't see the value
 
    * - Who can read the value
@@ -160,6 +160,7 @@ Use only these keys in the slot:
   that the keyring's :samp:`default` alias points to,
   which is the Login keyring in GNOME Keyring.
   Any other value is matched against collection labels.
+  The label must identify exactly one collection.
 
 Apply the definition with :command:`workshop launch` for a new workshop,
 or refresh an existing one:
@@ -208,7 +209,7 @@ Confirm the connection in the connections listing:
 
 
 The connection persists across :command:`workshop refresh`,
-including a refresh that changes the slot's attributes.
+including when the refresh changes the slot's attributes.
 To withdraw access, disconnect the plug:
 
 .. code-block:: console
@@ -223,8 +224,11 @@ Run the SDK's commands as usual.
 Nothing is fetched in advance:
 |ws_markup| looks the value up in the host keyring
 only when an SDK command or service requests it,
-hands it only to the process that made the request,
 and keeps no copy in the workshop.
+A direct command receives the value on standard output.
+A systemd service receives it in a credential file
+that the unit's user and root can read;
+other workshop processes running as the same user can also read that file.
 Each request is a fresh lookup,
 so a value you change in the keyring takes effect on the next one.
 While the plug stays connected,
@@ -264,7 +268,7 @@ Neither the changes nor their tasks ever contain the value.
 They are troubleshooting history, not a durable audit trail:
 ready changes are normally pruned after about 24 hours,
 and older records can be removed sooner
-when the project retains more than 500 ready changes.
+when the daemon holds more than 500 ready changes.
 
 To see why a request failed,
 list the tasks of its change;
@@ -283,7 +287,7 @@ the end of the logged error names the cause:
      2026-10-09T12:11:46Z ERROR getting secret value for sdk "<SDK>" and plug "<PLUG>" in workshop "<WORKSHOP>": resolving secret: provider "system": retrieving system secret: secret provider is locked
 
 
-While Workshop retains the change,
+While |ws_markup| retains the change,
 the log is available even when the SDK doesn't show you the error.
 
 
@@ -334,7 +338,10 @@ Otherwise, the error names the cause:
    * - :samp:`multiple secrets match plug "<SDK>.<PLUG>"; refine the secret slot`
      - Several items carry all the slot's attributes;
        logged as :samp:`multiple secrets match the request`.
-     - Add an attribute to the slot that only the intended item carries,
+     - List the matching items by running :command:`secret-tool search`
+       with :option:`!--all` and the slot's attributes,
+       discarding standard output.
+       Add an attribute to the slot that only the intended item carries,
        then run :command:`workshop refresh`,
        or remove the other items from the keyring.
 
@@ -348,6 +355,8 @@ Otherwise, the error names the cause:
        the error leaves out the details.
      - Find the cause in the logged error,
        as described in :ref:`how_provide_secrets_check`.
+       If the log reports an ambiguous collection label,
+       rename the collection or select a label that identifies only one.
 
 
 Pass a secret to a single command
