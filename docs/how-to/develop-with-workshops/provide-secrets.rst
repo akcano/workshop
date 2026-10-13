@@ -4,8 +4,8 @@
    :description: How-to guide on providing a credential to an SDK in a workshop,
                  either from the host keyring through a secret slot
                  and an explicitly connected plug,
-                 or as an environment variable for a single command,
-                 covering lookup failures and exposure limits.
+                 or ad hoc as an environment variable for a single command,
+                 covering troubleshooting and exposure limits.
 
 How to provide secrets to a workshop
 ====================================
@@ -237,9 +237,14 @@ any command in the workshop can request the value the same way.
 
 .. _how_provide_secrets_check:
 
-Check when the secret was requested
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Troubleshoot failed lookups
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+A connection doesn't guarantee that the lookup succeeds,
+because |ws_markup| asks the keyring only when the value is requested,
+and how a failure surfaces depends on the SDK.
+
+Start with the workshop's record of requests.
 Every request creates a recent record in the workshop's changes,
 whether it comes from an SDK command or a service,
 so you can check whether and when the SDK received the secret.
@@ -253,10 +258,10 @@ among the other recent changes:
 
      ID  STATUS  SPAWN               READY               SUMMARY
      ...
-     44  Done    today at 12:11 UTC  today at 12:11 UTC  Execute command "sh"
+     44  Done    today at 12:11 UTC  today at 12:11 UTC  Execute command "<COMMAND>"
      45  Error   today at 12:11 UTC  today at 12:11 UTC  Retrieve secret "<WORKSHOP>/<SDK>:<PLUG>"
      ...
-     58  Done    today at 12:12 UTC  today at 12:12 UTC  Execute command "sh"
+     58  Done    today at 12:12 UTC  today at 12:12 UTC  Execute command "<COMMAND>"
      59  Done    today at 12:12 UTC  today at 12:12 UTC  Retrieve secret "<WORKSHOP>/<SDK>:<PLUG>"
 
 
@@ -290,20 +295,13 @@ the end of the logged error names the cause:
 While |ws_markup| retains the change,
 the log is available even when the SDK doesn't show you the error.
 
-
-Fix failed lookups
-~~~~~~~~~~~~~~~~~~
-
-A connection doesn't guarantee that the lookup succeeds,
-because |ws_markup| asks the keyring only when the value is requested.
-How a failure surfaces depends on the SDK.
-To see the reason,
+To reproduce the failure,
 request the value yourself and discard it,
 so that only an error reaches your terminal:
 
 .. code-block:: console
 
-   $ workshop exec <WORKSHOP> -- sh -c 'workshopctl get-secret <SDK>.<PLUG> > /dev/null'
+   $ workshop exec <WORKSHOP> -- workshopctl get-secret <SDK>.<PLUG> > /dev/null
 
      cannot retrieve secret for plug "<SDK>.<PLUG>": unlock the secret provider and try again
 
@@ -350,37 +348,33 @@ Otherwise, the error names the cause:
        logged as :samp:`plug is not connected`.
      - Connect it as described in :ref:`how_provide_secrets_connect`.
 
-   * - :samp:`cannot retrieve secret for plug "<SDK>.<PLUG>": internal error`
-     - Another failure;
-       the error leaves out the details.
-     - Find the cause in the logged error,
-       as described in :ref:`how_provide_secrets_check`.
-       If the log reports an ambiguous collection label,
-       rename the collection or select a label that identifies only one.
+
+Any other failure prints an error without details;
+find its cause in the task log of the failed change.
 
 
 Pass a secret to a single command
 ---------------------------------
 
-For a one-off command that you run yourself,
-pass the value as an environment variable
-of a single :command:`workshop exec` or :command:`workshop run` invocation
-with the :option:`!--env` flag.
+To give a one-off command a credential
+without adding a slot or connecting a plug,
+pass it ad hoc as an environment variable
+of a single :command:`workshop exec` or :command:`workshop run` invocation.
+This works with any credential store on the host;
+what keeps it safe is that the value never appears on the command line.
 
-Don't type the value itself on the command line,
-as in :samp:`--env OPENAI_API_KEY=<VALUE>`:
+Give the :option:`!--env` flag only the variable's name;
+|ws_markup| then takes the value from the environment
+of the :program:`workshop` command itself.
+Don't type the value, as in :samp:`--env OPENAI_API_KEY=<VALUE>`:
 it stays in your shell history,
 and other processes on the host can read it from the process list
 while the command runs.
-Instead, give :option:`!--env` only the variable's name;
-|ws_markup| then takes the value from the environment
-of the :program:`workshop` command itself.
-Fill that variable from where the credential is already stored,
-so that you never type the value.
 
-For a single command,
-fetch the value with a command substitution
-in an assignment that prefixes the command:
+Instead, fill the variable from where the credential is already stored,
+with a command substitution
+in an assignment that prefixes the command.
+For an item in the host keyring:
 
 .. code-block:: console
 
@@ -391,8 +385,17 @@ The shell history records the lookup, not the value,
 and the assignment applies only to that command,
 so the variable doesn't remain in your shell afterwards.
 
-If you use `direnv <https://direnv.net/>`_ on the host,
-let it set the variable whenever you enter the project directory,
+A password manager's CLI works the same way
+once you've signed in or unlocked the vault:
+put its lookup in the substitution instead,
+such as :command:`op read` from the
+`1Password CLI <https://www.1password.dev/cli/reference/commands/read>`_
+or :command:`bw get password` from the
+`Bitwarden CLI <https://bitwarden.com/help/cli/>`_.
+
+To avoid repeating the lookup in every command,
+you can let a tool such as `direnv <https://direnv.net/>`_
+set the variable whenever you enter the project directory on the host,
 with an :file:`.envrc` file that runs the same lookup:
 
 .. code-block:: shell
@@ -417,8 +420,7 @@ inherits the variable.
 If the named variable isn't set,
 |ws_markup| skips it without an error
 and runs the command without it.
-
-In both cases, the value exists only for that invocation:
+Otherwise, the value exists only for that invocation:
 the command and every process it starts can read it,
 and the next command in the workshop doesn't see it.
 
