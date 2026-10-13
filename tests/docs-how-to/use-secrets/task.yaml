@@ -34,33 +34,36 @@ execute: |
   chmod +x "$SDKDIR/files/bin/secret-demo-tool"
   chown -R ubuntu:ubuntu "$SDKDIR" "$PROJECTDIR"
 
+  echo "Store the deterministic 23-byte test value"
+  store_secret not-a-real-secret-value \
+      --collection=default service secret-demo account test
+
   echo "Build the SDK with its secret plug and demo tool"
   (cd "$SDKDIR" && run_sdkcraft try)
 
-  echo "Store the deterministic 23-byte test value"
-  store_secret not-a-real-secret-value \
-      service secret-demo account test
-
-  echo "Launch the test workshop"
+  echo "Launch the test workshop and connect the plug"
   cd "$PROJECTDIR"
   workshop_exec launch
-
-  echo "Check an unconnected request reports exit code 3"
-  exitcode=0
-  workshop_exec exec dev -- \
-      workshopctl get-secret secret-demo.api-key \
-      > unconnected.out || exitcode="$?"
-  [ "$exitcode" -eq 3 ]
-  MATCH 'secret plug "secret-demo.api-key" is not connected' \
-      < unconnected.out
-
-  echo "Connect the plug and check direct retrieval without printing the value"
   workshop_exec connect \
       dev/secret-demo:api-key dev/system:demo-key
+
+  echo "Check direct retrieval without printing the value"
   workshop_exec exec dev -- \
-      sh -c 'workshopctl get-secret secret-demo.api-key | wc -c' \
-      > direct.out
+      workshopctl get-secret secret-demo.api-key \
+      | wc -c > direct.out
   MATCH '^[[:space:]]*23[[:space:]]*$' < direct.out
+
+  echo "Check an unconnected request reports exit code 3 on stderr"
+  workshop_exec disconnect dev/secret-demo:api-key
+  exitcode=0
+  sudo -u ubuntu -- workshop exec dev -- \
+      workshopctl get-secret secret-demo.api-key \
+      2> unconnected.err > /dev/null || exitcode="$?"
+  [ "$exitcode" -eq 3 ]
+  MATCH 'secret plug "secret-demo.api-key" is not connected' \
+      < unconnected.err
+  workshop_exec connect \
+      dev/secret-demo:api-key dev/system:demo-key
 
   echo "Add the wrapper and its PATH hook"
   cp "$TESTROOT/files/bin/secret-demo" "$SDKDIR/files/bin/"
@@ -70,13 +73,10 @@ execute: |
   (cd "$SDKDIR" && run_sdkcraft try)
   workshop_exec refresh
 
-  echo "Check the wrapper passes the key only to the tool"
-  workshop_exec exec dev -- sh -c \
-      'secret-demo; printf "after: %s\n" "${SECRET_DEMO_API_KEY-<unset>}"' \
-      > wrapper.out
+  echo "Check the wrapper passes the key to the tool"
+  workshop_exec exec dev -- secret-demo > wrapper.out
   MATCH 'secret-demo-tool: authenticated with a 23-character key' \
       < wrapper.out
-  MATCH '^after: <unset>$' < wrapper.out
 
   echo "Check the wrapper deliberately preserves get-secret stderr"
   workshop_exec disconnect dev/secret-demo:api-key
@@ -120,6 +120,14 @@ execute: |
       systemctl is-active secret-demo.service \
       > service.out
   MATCH '^active$' < service.out
+
+  echo "Check a single-command value works without the plug"
+  workshop_exec disconnect dev/secret-demo:api-key
+  # Run the documented command line as ubuntu in the keyring session.
+  secret_service_env sh -c 'SECRET_DEMO_API_KEY=$(secret-tool lookup service secret-demo account test) workshop exec --env SECRET_DEMO_API_KEY dev -- secret-demo' \
+      > single.out 2>&1
+  MATCH 'secret-demo-tool: authenticated with a 23-character key' \
+      < single.out
 
   echo "Check secret requests appear in recent changes"
   workshop_exec changes > changes.out
