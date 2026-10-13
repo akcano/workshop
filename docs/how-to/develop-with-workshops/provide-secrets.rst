@@ -270,10 +270,6 @@ to the process that requested it;
 :samp:`Error` means that it wasn't.
 The :samp:`SPAWN` column shows when the request was made.
 Neither the changes nor their tasks ever contain the value.
-They are troubleshooting history, not a durable audit trail:
-ready changes are normally pruned after about 24 hours,
-and older records can be removed sooner
-when the daemon holds more than 500 ready changes.
 
 To see why a request failed,
 list the tasks of its change;

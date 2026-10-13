@@ -252,12 +252,6 @@ but never contain the value.
 Use :command:`workshop changes` and :command:`workshop tasks`
 to troubleshoot an integration that hides the immediate error.
 
-These records are recent troubleshooting history,
-not a durable audit trail.
-Ready changes are normally pruned after about 24 hours,
-and older records can be removed sooner
-when the daemon holds more than 500 ready changes.
-
 
 Use a tool-native credential helper
 -----------------------------------
