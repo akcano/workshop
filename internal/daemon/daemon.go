@@ -30,6 +30,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/coreos/go-systemd/activation"
 	"github.com/gorilla/mux"
 	"gopkg.in/tomb.v2"
 
@@ -357,18 +358,33 @@ func logit(handler http.Handler) http.Handler {
 // Init sets up the Daemon's internal workings.
 // Don't call more than once.
 func (d *Daemon) Init() error {
-	listenerMap, err := netutil.ActivationListeners()
+	// pass false to keep LISTEN_* environment variables passed by systemd
+	files := activation.Files(false)
+	defer func() {
+		for _, f := range files {
+			f.Close()
+		}
+	}()
+
+	listenerMap, err := netutil.ActivationListeners(files)
 	if err != nil {
 		return err
 	}
+	defer func() {
+		for _, l := range listenerMap {
+			l.Close()
+		}
+	}()
 
-	if listener, err := netutil.GetListener(d.normalSocketPath, listenerMap); err == nil {
+	listener, err := netutil.CreateOrTakeListener(d.normalSocketPath, listenerMap)
+	if err == nil {
 		d.generalListener = &ucrednetListener{Listener: listener, trusted: true}
 	} else {
 		return fmt.Errorf("when trying to listen on %s: %w", d.normalSocketPath, err)
 	}
 
-	if listener, err := netutil.GetListener(d.untrustedSocketPath, listenerMap); err == nil {
+	listener, err = netutil.CreateOrTakeListener(d.untrustedSocketPath, listenerMap)
+	if err == nil {
 		// This listener may also be nil if that socket wasn't among
 		// the listeners, so check it before using it.
 		d.untrustedListener = &ucrednetListener{Listener: listener}

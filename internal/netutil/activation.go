@@ -26,16 +26,17 @@ import (
 	"runtime"
 	unix "syscall"
 
-	"github.com/coreos/go-systemd/activation"
-
 	"github.com/canonical/workshop/internal/logger"
+	"github.com/canonical/workshop/internal/revert"
 )
 
-// GetListener tries to get a listener for the given socket path from
-// the listener map, and if it fails it tries to set it up directly.
-func GetListener(socketPath string, listenerMap map[string]net.Listener) (net.Listener, error) {
-	if listener, ok := listenerMap[socketPath]; ok {
-		return listener, nil
+// CreateOrTakeListener tries to take a listener for the given socket path
+// from the listener map, and if it fails it tries to set it up directly.
+func CreateOrTakeListener(socketPath string, listenerMap map[string]net.Listener) (net.Listener, error) {
+	l, ok := listenerMap[socketPath]
+	if ok {
+		delete(listenerMap, socketPath)
+		return l, nil
 	}
 
 	if c, err := net.Dial("unix", socketPath); err == nil {
@@ -68,11 +69,16 @@ func GetListener(socketPath string, listenerMap map[string]net.Listener) (net.Li
 
 // ActivationListeners builds a map of addresses to listeners that were passed
 // during systemd activation
-func ActivationListeners() (lns map[string]net.Listener, err error) {
-	// pass false to keep LISTEN_* environment variables passed by systemd
-	files := activation.Files(false)
-	lns = make(map[string]net.Listener, len(files))
+func ActivationListeners(files []*os.File) (map[string]net.Listener, error) {
+	rev := revert.New()
+	defer rev.Fail()
 
+	lns := make(map[string]net.Listener, len(files))
+	rev.Add(func() {
+		for _, ln := range lns {
+			ln.Close()
+		}
+	})
 	for _, f := range files {
 		ln, err := net.FileListener(f)
 		if err != nil {
@@ -81,5 +87,6 @@ func ActivationListeners() (lns map[string]net.Listener, err error) {
 		addr := ln.Addr().String()
 		lns[addr] = ln
 	}
+	rev.Success()
 	return lns, nil
 }
