@@ -143,9 +143,12 @@ and puts nothing in the workshop;
 it only permits later requests.
 
 For an LXD container workshop,
-:command:`workshop refresh` keeps the connection,
-including when the refresh changes the slot's attributes,
-so a corrected lookup takes effect without reconnecting.
+:command:`workshop refresh` keeps the connection
+while the slot's :samp:`attributes` and :samp:`collection` stay the same.
+A refresh that changes either of them disconnects the plug
+and reports a warning,
+because the new lookup can match a different item;
+connecting the plug again approves the new lookup.
 VM workshops don't restore interface connections during a refresh;
 the user must reconnect the plug afterward.
 A :command:`workshop restore` drops it, like any manual connection,
@@ -256,8 +259,9 @@ Give its unit a restart policy,
 or restart it once the plug is connected;
 :ref:`how_use_secrets` shows both.
 
-VM refreshes don't restore interface connections.
-Reconnect the plug,
+VM refreshes don't restore interface connections,
+and a refresh that changes the slot's lookup disconnects the plug.
+In either case, reconnect the plug,
 then restart the service.
 
 
