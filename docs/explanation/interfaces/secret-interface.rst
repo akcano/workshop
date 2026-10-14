@@ -175,12 +175,14 @@ Because every request is a fresh lookup,
 the keyring stays in control:
 a value changed in the keyring takes effect on the next request,
 and a request made while the keyring is locked fails.
-|ws_markup| looks the item up through the D-Bus session bus
-of the user's desktop session,
+|ws_markup| looks the item up through the user's D-Bus session bus,
 where a keyring service implementing the freedesktop.org Secret Service,
 such as GNOME Keyring, must be running.
-It doesn't unlock the keyring or prompt for a password;
-the user unlocks it in the desktop session.
+A desktop login usually provides both,
+but a session without a desktop works too
+if it runs such a service.
+|ws_markup| doesn't unlock the keyring or prompt for a password;
+the user unlocks it in their session.
 
 A process can request the value in two ways.
 
