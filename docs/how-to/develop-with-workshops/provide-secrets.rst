@@ -57,7 +57,8 @@ so pick one before you start:
    * - What persists
      - The value stays in your keyring;
        the workshop keeps the connection across refreshes
-       until you disconnect it or remove an endpoint
+       until you disconnect it, remove an endpoint,
+       or change the slot's lookup
      - Nothing; the next command in the workshop doesn't see the value
 
    * - Who can read the value
@@ -208,8 +209,14 @@ Confirm the connection in the connections listing:
      secret     <WORKSHOP>/<SDK>:<PLUG>  <WORKSHOP>/system:openai-key  manual
 
 
-The connection persists across :command:`workshop refresh`,
-including when the refresh changes the slot's attributes.
+The connection persists across :command:`workshop refresh`
+while the slot's :samp:`attributes` and :samp:`collection` stay the same.
+A refresh that changes either of them disconnects the plug,
+because the new lookup can match a different item,
+and reports a new warning;
+:command:`workshop warnings` names the dropped connection.
+Connect the plug again to approve the new lookup.
+
 To withdraw access, disconnect the plug:
 
 .. code-block:: console
@@ -326,8 +333,9 @@ Otherwise, the error names the cause:
      - Compare the slot with :command:`secret-tool search`
        using the same attributes,
        correct the slot's :samp:`attributes` or :samp:`collection`,
-       then run :command:`workshop refresh`;
-       the connection stays in place.
+       then run :command:`workshop refresh`
+       and connect the plug again,
+       because the changed lookup disconnects it.
 
    * - :samp:`multiple secrets match plug "<SDK>.<PLUG>"; refine the secret slot`
      - Several items carry all the slot's attributes;
@@ -336,7 +344,8 @@ Otherwise, the error names the cause:
        with :option:`!--all` and the slot's attributes,
        discarding standard output.
        Add an attribute to the slot that only the intended item carries,
-       then run :command:`workshop refresh`,
+       then run :command:`workshop refresh`
+       and connect the plug again,
        or remove the other items from the keyring.
 
    * - :samp:`secret plug "<SDK>.<PLUG>" is not connected`
@@ -440,4 +449,5 @@ Reference:
 - :ref:`ref_workshop_exec`
 - :ref:`ref_workshop_run`
 - :ref:`ref_workshop_tasks`
+- :ref:`ref_workshop_warnings`
 - :ref:`ref_workshopctl__cli`
