@@ -71,7 +71,7 @@ only to the SDKs that require it. Another example is avoiding the connection of
 sensitive interfaces, such as the SSH agent, unless absolutely necessary.
 
 To handle sensitive data in your SDKs, use the
-{ref}`secret interface <exp_secret_interface>`
+[secret interface](https://ubuntu.com/workshop/docs/explanation/interfaces/secret-interface/)
 for access tokens kept in the host keyring, environment variables of a single
 Workshop command for one-off values, or the
 [SSH interface](https://ubuntu.com/workshop/docs/explanation/interfaces/ssh-interface/)
@@ -121,7 +121,7 @@ autonomy:
     lets any process in the workshop authenticate with the identities in your
     host's SSH agent while it's connected.
   * The
-    {ref}`secret interface <exp_secret_interface>`
+    [secret interface](https://ubuntu.com/workshop/docs/explanation/interfaces/secret-interface/)
     lets any process in the workshop request the credential from your host
     keyring while it's connected.
   * [Mounts](https://ubuntu.com/workshop/docs/explanation/interfaces/mount-interface/)
@@ -192,7 +192,7 @@ User‑exposed crypto and providers
 allowing tools inside the container to authenticate without copying private keys.
 - Secret interface: reads a credential from the host keyring through the freedesktop.org Secret Service
 on the user's D-Bus session bus each time a process in the workshop requests it,
-and writes a direct request to the requesting command's standard output.
+and, for a direct request, writes the value to the requesting command's standard output.
 For a systemd request, the value is a credential file readable by the unit's
 user and root; ordinary workshop processes share the `workshop` user.
 While the plug is connected, any process in the workshop can make a new request.

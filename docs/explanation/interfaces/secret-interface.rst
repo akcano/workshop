@@ -197,7 +197,10 @@ which checks that the plug is connected,
 looks up the item described by the connected slot,
 and returns the value.
 :program:`workshopctl` writes it to its standard output,
-so the value goes only to the process that reads that output.
+so the value goes wherever that output goes:
+normally into the wrapper that captures it,
+but also to a terminal, a file, or a log
+if the output is sent there.
 
 When the request fails,
 :program:`workshopctl` prints a short message
@@ -273,8 +276,9 @@ whether from a command or a service,
 creates a :samp:`Retrieve secret` change
 named after the workshop, SDK, and plug,
 such as :samp:`Retrieve secret "dev/secret-demo:api-key"`.
-A :samp:`Done` change means that the value was delivered;
-an :samp:`Error` change means that it wasn't,
+A :samp:`Done` change means that |ws_markup| retrieved the value;
+it doesn't confirm that the requesting process received it.
+An :samp:`Error` change means that the retrieval failed,
 and its task log names the cause.
 Neither the change nor its tasks contain the value.
 
