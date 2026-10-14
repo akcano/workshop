@@ -104,8 +104,10 @@ func (s SecretService) Get(
 	}
 
 	var output, errorOutput bytes.Buffer
-	// Stderr may contain sensitive diagnostics; clear it on every return path.
+	// Both buffers may carry secret material: stdout holds the base64-encoded
+	// secret and stderr may hold diagnostics. Clear them on every return path.
 	defer func() {
+		clear(output.Bytes())
 		clear(errorOutput.Bytes())
 	}()
 
