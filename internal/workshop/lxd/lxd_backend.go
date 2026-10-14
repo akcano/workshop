@@ -56,6 +56,9 @@ const (
 	// derive the workshop's machine ID.
 	instanceUUIDConfigKey = "volatile.uuid"
 
+	// vsockIDConfigKey is a LXD config option holding the vsock CID.
+	vsockIDConfigKey = "volatile.vsock_id"
+
 	networkName = "workshopbr0"
 	networkType = "bridge"
 
@@ -1120,6 +1123,15 @@ func (b *Backend) loadWorkshop(conn lxd.InstanceServer, inst *api.Instance, user
 		return nil, fmt.Errorf("cannot load workshop: %v", err)
 	}
 
+	var vsockContextID uint32
+	if cid := inst.Config[vsockIDConfigKey]; cid != "" {
+		value, err := strconv.ParseUint(cid, 10, 32)
+		if err != nil {
+			return nil, fmt.Errorf("invalid vsock CID: %w", err)
+		}
+		vsockContextID = uint32(value)
+	}
+
 	format, err := sdk.ParseRevision(inst.Config[workshop.ConfigWorkshopSnapshotFormat])
 	if err != nil {
 		return nil, err
@@ -1159,18 +1171,19 @@ func (b *Backend) loadWorkshop(conn lxd.InstanceServer, inst *api.Instance, user
 	hostname := b.hostname(f.Name, p, running, cnames)
 
 	return &workshop.Workshop{
-		Backend:    b,
-		User:       user,
-		Project:    p,
-		InstanceID: instanceIDFromLXDUUID(inst.Config[instanceUUIDConfigKey]),
-		Name:       f.Name,
-		Format:     format,
-		Image:      image,
-		Running:    running,
-		Sdks:       sdks,
-		Profiles:   profs,
-		File:       f,
-		Hostname:   hostname,
+		Backend:        b,
+		User:           user,
+		Project:        p,
+		InstanceID:     instanceIDFromLXDUUID(inst.Config[instanceUUIDConfigKey]),
+		VsockContextID: vsockContextID,
+		Name:           f.Name,
+		Format:         format,
+		Image:          image,
+		Running:        running,
+		Sdks:           sdks,
+		Profiles:       profs,
+		File:           f,
+		Hostname:       hostname,
 	}, nil
 }
 

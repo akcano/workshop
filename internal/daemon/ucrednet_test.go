@@ -66,7 +66,7 @@ func (s *ucrednetSuite) TestAcceptConnContext(c *check.C) {
 	conn, err := wl.Accept()
 	c.Assert(err, check.IsNil)
 
-	ctx := ucrednetConnContext(context.Background(), conn)
+	ctx := connContext(context.Background(), conn)
 	cred, ok := ctx.Value(contextUcrednet).(ucrednet)
 	c.Assert(ok, check.Equals, true)
 	c.Check(cred.pid, check.Equals, int32(100))
@@ -93,7 +93,7 @@ func (s *ucrednetSuite) TestAcceptConnContextUntrusted(c *check.C) {
 	conn, err := wl.Accept()
 	c.Assert(err, check.IsNil)
 
-	ctx := ucrednetConnContext(context.Background(), conn)
+	ctx := connContext(context.Background(), conn)
 	cred, ok := ctx.Value(contextUcrednet).(ucrednet)
 	c.Assert(ok, check.Equals, true)
 	c.Check(cred.pid, check.Equals, int32(100))
@@ -125,7 +125,7 @@ func (s *ucrednetSuite) TestNonUcrednetListener(c *check.C) {
 	peer.Close()
 	defer conn.Close()
 
-	_, ok := ucrednetConnContext(context.Background(), conn).Value(contextUcrednet).(ucrednet)
+	_, ok := connContext(context.Background(), conn).Value(contextUcrednet).(ucrednet)
 	c.Check(ok, check.Equals, false)
 }
 

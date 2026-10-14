@@ -37,6 +37,7 @@ import (
 type ContextKeyProjectId string
 type ContextKeyUser string
 type ContextKeyWorkshopUser string
+type ContextKeyVsockCID string
 type ContextKeyWorkshopInstanceID string
 
 const (
@@ -45,6 +46,8 @@ const (
 	// ContextWorkshopUser is like ContextUser but the request is coming from a
 	// workshop rather than the user directly.
 	ContextWorkshopUser = ContextKeyWorkshopUser("workshop-user")
+	// ContextVsockCID stores the vsock CID of a virtual machine workshop.
+	ContextVsockCID = ContextKeyVsockCID("cid")
 	// ContextWorkshopInstanceID stores the identifier of the workshop instance
 	// from which a request originated.
 	ContextWorkshopInstanceID = ContextKeyWorkshopInstanceID("workshop-instance-id")

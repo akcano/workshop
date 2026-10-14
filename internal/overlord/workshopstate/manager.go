@@ -138,46 +138,55 @@ func (w *WorkshopManager) Workshop(ctx context.Context, name, pId string) (*work
 	return workshop, nil
 }
 
-// ResolveWorkshopInstanceID finds the workshop owned by the user in ctx with
-// the specified backend instance identifier. It returns nil without an error
-// if the identifier is empty or unknown, or ctx does not identify a user.
+// ResolveWorkshopInstanceID finds the workshop with the specified backend
+// instance identifier. It returns nil without an error if the identifier is
+// empty or unknown, or ctx leaves both the user and vsock CID unspecified, or
+// the resulting workshop doesn't match the given user or vsock CID.
 func (w *WorkshopManager) ResolveWorkshopInstanceID(
 	ctx context.Context,
 	instanceID string,
 ) (*WorkshopIdentity, error) {
-	userCtx := ctx
-	user, ok := ctx.Value(workshop.ContextWorkshopUser).(string)
-	if ok {
-		userCtx = context.WithValue(userCtx, workshop.ContextUser, user)
+	searchCtx := ctx
+	user, hasUser := ctx.Value(workshop.ContextWorkshopUser).(string)
+	if hasUser {
+		searchCtx = context.WithValue(searchCtx, workshop.ContextUser, user)
 	} else {
-		user, ok = ctx.Value(workshop.ContextUser).(string)
+		_, hasUser = ctx.Value(workshop.ContextUser).(string)
 	}
-	if instanceID == "" || !ok || user == "" {
+
+	cid, hasCID := ctx.Value(workshop.ContextVsockCID).(uint32)
+
+	if instanceID == "" || (!hasUser && !hasCID) {
 		return nil, nil
 	}
 
-	projects, err := w.backend.UserProjects(userCtx)
+	// We ask for all projects, but only get one if the user is known.
+	allProjects, err := w.backend.Projects(searchCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, project := range projects {
-		projectCtx := context.WithValue(
-			userCtx,
-			workshop.ContextProjectId,
-			project.ProjectId,
-		)
-		workshops, err := w.backend.ProjectWorkshops(projectCtx)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"cannot list workshops for project %q: %w",
+	for user, projects := range allProjects {
+		userCtx := context.WithValue(ctx, workshop.ContextUser, user)
+		for _, project := range projects {
+			projectCtx := context.WithValue(
+				userCtx,
+				workshop.ContextProjectId,
 				project.ProjectId,
-				err,
 			)
-		}
+			workshops, err := w.backend.ProjectWorkshops(projectCtx)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"cannot list workshops for project %q: %w",
+					project.ProjectId,
+					err,
+				)
+			}
 
-		for _, candidate := range workshops {
-			if candidate.InstanceID == instanceID {
+			for _, candidate := range workshops {
+				if candidate.InstanceID != instanceID || (hasUser && candidate.User != user) || (hasCID && candidate.VsockContextID != cid) {
+					continue
+				}
 				return &WorkshopIdentity{
 					User:     user,
 					Project:  project,

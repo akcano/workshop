@@ -22,6 +22,7 @@ Workshop:
   User: string
   Project: workshop.Project
   InstanceID: string
+  VsockContextID: uint32
   File: '*workshop.File'
   Name: string
   Format: sdk.Revision

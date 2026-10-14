@@ -15,7 +15,6 @@
 package daemon
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"sync"
@@ -36,14 +35,6 @@ type ucrednet struct {
 	// trusted indicates whether the request came directly from the user, or
 	// another entity (e.g. a workshop) owned by the user.
 	trusted bool
-}
-
-func ucrednetConnContext(ctx context.Context, c net.Conn) context.Context {
-	uc, ok := c.(*ucrednetConn)
-	if !ok {
-		return ctx
-	}
-	return context.WithValue(ctx, contextUcrednet, uc.ucrednet)
 }
 
 type ucrednetConn struct {

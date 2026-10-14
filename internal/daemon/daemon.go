@@ -32,6 +32,7 @@ import (
 
 	"github.com/coreos/go-systemd/activation"
 	"github.com/gorilla/mux"
+	"github.com/mdlayher/vsock"
 	"gopkg.in/tomb.v2"
 
 	"github.com/canonical/workshop/internal/logger"
@@ -63,6 +64,12 @@ type Options struct {
 	// the workshop directory.
 	SocketPath string
 
+	// VsockPort is an optional vsock port for untrusted connections from VMs.
+	VsockPort uint32
+	// VsockLimitToGuests forces the daemon to listen on VMADDR_CID_HOST,
+	// failing if the vhost_vsock kernel module is unavailable.
+	VsockLimitToGuests bool
+
 	// HTTPAddress is the address for the plain HTTP API server, for example
 	// ":4000" to listen on any address, port 4000. If not set, the HTTP API
 	// server is not started.
@@ -76,11 +83,14 @@ type Daemon struct {
 	workshopDir         string
 	normalSocketPath    string
 	untrustedSocketPath string
+	vsockPort           uint32
+	vsockLimitToGuests  bool
 	httpAddress         string
 	overlord            *overlord.Overlord
 	state               *state.State
 	generalListener     net.Listener
 	untrustedListener   net.Listener
+	vsockListener       net.Listener
 	httpListener        net.Listener
 	connTracker         *connTracker
 	serve               *http.Server
@@ -155,10 +165,12 @@ func (c *Command) canAccess(r *http.Request, user *userState) accessResult {
 	}
 
 	// isUser means we have a UID for the request, from a trusted socket.
-	cred, ok := r.Context().Value(contextUcrednet).(ucrednet)
-	isUser := ok && cred.trusted && cred.uid != ucrednetNobody
+	cred, hasUser := r.Context().Value(contextUcrednet).(ucrednet)
+	isUser := hasUser && cred.trusted && cred.uid != ucrednetNobody
 
-	if ok && !cred.trusted {
+	_, hasCID := r.Context().Value(workshop.ContextVsockCID).(uint32)
+
+	if (hasUser && !cred.trusted) || hasCID {
 		if c.UntrustedOK {
 			return accessOK
 		}
@@ -389,7 +401,16 @@ func (d *Daemon) Init() error {
 		// the listeners, so check it before using it.
 		d.untrustedListener = &ucrednetListener{Listener: listener}
 	} else {
-		logger.Debugf("cannot get listener for %q: %v", d.untrustedSocketPath, err)
+		logger.Debugf("Cannot get listener for %q: %v", d.untrustedSocketPath, err)
+	}
+
+	if d.vsockPort != 0 {
+		listener, err := netutil.CreateOrTakeVsockGuestListener(d.vsockPort, d.vsockLimitToGuests, listenerMap)
+		if err == nil {
+			d.vsockListener = listener
+		} else {
+			logger.Debugf("Cannot get vsock listener on port %d: %v", d.vsockPort, err)
+		}
 	}
 
 	d.addRoutes()
@@ -500,7 +521,7 @@ func (d *Daemon) Start() error {
 	d.serve = &http.Server{
 		Handler:     logit(d.router),
 		ConnState:   d.connTracker.trackConn,
-		ConnContext: ucrednetConnContext,
+		ConnContext: connContext,
 	}
 
 	d.initStandbyHandling()
@@ -511,6 +532,14 @@ func (d *Daemon) Start() error {
 		if d.untrustedListener != nil {
 			d.tomb.Go(func() error {
 				if err := d.serve.Serve(d.untrustedListener); err != http.ErrServerClosed && d.tomb.Err() == tomb.ErrStillAlive {
+					return err
+				}
+				return nil
+			})
+		}
+		if d.vsockListener != nil {
+			d.tomb.Go(func() error {
+				if err := d.serve.Serve(d.vsockListener); err != http.ErrServerClosed && d.tomb.Err() == tomb.ErrStillAlive {
 					return err
 				}
 				return nil
@@ -537,6 +566,21 @@ func (d *Daemon) Start() error {
 	// notify systemd that we are ready
 	systemdSdNotify("READY=1")
 	return nil
+}
+
+func connContext(ctx context.Context, c net.Conn) context.Context {
+	uc, ok := c.(*ucrednetConn)
+	if ok {
+		return context.WithValue(ctx, contextUcrednet, uc.ucrednet)
+	}
+
+	_, ok1 := c.(*vsock.Conn)
+	addr, ok2 := c.RemoteAddr().(*vsock.Addr)
+	if ok1 && ok2 {
+		return context.WithValue(ctx, workshop.ContextVsockCID, addr.ContextID)
+	}
+
+	return ctx
 }
 
 // HandleRestart implements overlord.RestartBehavior.
@@ -764,6 +808,8 @@ func New(opts *Options) (*Daemon, error) {
 		workshopDir:         opts.Dir,
 		normalSocketPath:    opts.SocketPath,
 		untrustedSocketPath: opts.SocketPath + ".untrusted",
+		vsockPort:           opts.VsockPort,
+		vsockLimitToGuests:  opts.VsockLimitToGuests,
 		httpAddress:         opts.HTTPAddress,
 	}
 

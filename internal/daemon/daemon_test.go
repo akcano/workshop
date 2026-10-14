@@ -480,6 +480,34 @@ func (s *daemonSuite) TestUntrustedPeerAccess(c *check.C) {
 	c.Check(cmd.canAccess(put, nil), check.Equals, accessOK)
 }
 
+func (s *daemonSuite) TestVsockPeerAccess(c *check.C) {
+	d := s.newDaemon(c)
+
+	ctx := context.WithValue(context.Background(), workshop.ContextVsockCID, uint32(3))
+	get := (&http.Request{Method: "GET"}).WithContext(ctx)
+	post := (&http.Request{Method: "POST"}).WithContext(ctx)
+
+	cmd := &Command{d: d}
+	c.Check(cmd.canAccess(get, nil), check.Equals, accessUnauthorized)
+	c.Check(cmd.canAccess(post, nil), check.Equals, accessUnauthorized)
+
+	cmd = &Command{d: d, AdminOnly: true}
+	c.Check(cmd.canAccess(get, nil), check.Equals, accessUnauthorized)
+	c.Check(cmd.canAccess(post, nil), check.Equals, accessUnauthorized)
+
+	cmd = &Command{d: d, UserOK: true}
+	c.Check(cmd.canAccess(get, nil), check.Equals, accessUnauthorized)
+	c.Check(cmd.canAccess(post, nil), check.Equals, accessUnauthorized)
+
+	cmd = &Command{d: d, GuestOK: true}
+	c.Check(cmd.canAccess(get, nil), check.Equals, accessUnauthorized)
+	c.Check(cmd.canAccess(post, nil), check.Equals, accessUnauthorized)
+
+	cmd = &Command{d: d, UntrustedOK: true}
+	c.Check(cmd.canAccess(get, nil), check.Equals, accessOK)
+	c.Check(cmd.canAccess(post, nil), check.Equals, accessOK)
+}
+
 func (s *daemonSuite) TestBadUidAccess(c *check.C) {
 	d := s.newDaemon(c)
 
@@ -565,12 +593,17 @@ func (s *daemonSuite) TestStartStop(c *check.C) {
 	c.Assert(err, check.IsNil)
 	l2, err := net.Listen("tcp", "127.0.0.1:0")
 	c.Assert(err, check.IsNil)
+	l3, err := net.Listen("tcp", "127.0.0.1:0")
+	c.Assert(err, check.IsNil)
 
 	generalAccept := make(chan struct{})
 	d.generalListener = &witnessAcceptListener{Listener: l1, accept: generalAccept}
 
 	untrustedAccept := make(chan struct{})
 	d.untrustedListener = &witnessAcceptListener{Listener: l2, accept: untrustedAccept}
+
+	vsockAccept := make(chan struct{})
+	d.vsockListener = &witnessAcceptListener{Listener: l3, accept: vsockAccept}
 
 	err = d.Start()
 	c.Assert(err, check.IsNil)
@@ -595,8 +628,19 @@ func (s *daemonSuite) TestStartStop(c *check.C) {
 		close(untrustedDone)
 	}()
 
+	vsockDone := make(chan struct{})
+	go func() {
+		select {
+		case <-vsockAccept:
+		case <-time.After(2 * time.Second):
+			c.Fatal("vsock listener accept was not called")
+		}
+		close(vsockDone)
+	}()
+
 	<-generalDone
 	<-untrustedDone
+	<-vsockDone
 
 	err = d.Stop(nil)
 	c.Check(err, check.IsNil)

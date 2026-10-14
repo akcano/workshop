@@ -177,3 +177,60 @@ func (s *managerSuite) TestResolveWorkshopInstanceIDRejectsAnotherUsersWorkshop(
 	c.Assert(err, check.IsNil)
 	c.Check(identity, check.IsNil)
 }
+
+// TestResolveWorkshopInstanceIDResolvesByCID checks that a request with a vsock
+// CID but no user resolves the matching workshop.
+func (s *managerSuite) TestResolveWorkshopInstanceIDResolvesByCID(c *check.C) {
+	userCtx := context.WithValue(context.Background(), workshop.ContextUser, "test-user")
+	project := s.addWorkshop(c, userCtx, "test-workshop", "instance-id")
+	s.backend.Workshops[project.ProjectId]["test-workshop"].VsockContextID = 42
+
+	otherCtx := context.WithValue(context.Background(), workshop.ContextUser, "other-user")
+	other := s.addWorkshop(c, otherCtx, "other-workshop", "other-instance-id")
+	s.backend.Workshops[other.ProjectId]["other-workshop"].VsockContextID = 99
+
+	requestCtx := context.WithValue(context.Background(), workshop.ContextVsockCID, uint32(42))
+	identity, err := s.manager.ResolveWorkshopInstanceID(requestCtx, "instance-id")
+
+	c.Assert(err, check.IsNil)
+	c.Assert(identity, check.NotNil)
+	c.Check(identity.User, check.Equals, "test-user")
+	c.Check(identity.Project, check.DeepEquals, project)
+	c.Check(identity.Workshop, check.Equals, "test-workshop")
+}
+
+// TestResolveWorkshopInstanceIDRejectsMismatchedCID checks that a workshop is
+// not resolved when its vsock CID does not match the requested CID.
+func (s *managerSuite) TestResolveWorkshopInstanceIDRejectsMismatchedCID(c *check.C) {
+	userCtx := context.WithValue(context.Background(), workshop.ContextUser, "test-user")
+	project := s.addWorkshop(c, userCtx, "test-workshop", "instance-id")
+	s.backend.Workshops[project.ProjectId]["test-workshop"].VsockContextID = 42
+
+	requestCtx := context.WithValue(context.Background(), workshop.ContextVsockCID, uint32(99))
+	identity, err := s.manager.ResolveWorkshopInstanceID(requestCtx, "instance-id")
+
+	c.Assert(err, check.IsNil)
+	c.Check(identity, check.IsNil)
+}
+
+// TestResolveWorkshopInstanceIDEnforcesUserAndCID checks that a vsock CID is
+// still enforced when the request also supplies an user.
+func (s *managerSuite) TestResolveWorkshopInstanceIDEnforcesUserAndCID(c *check.C) {
+	userCtx := context.WithValue(context.Background(), workshop.ContextUser, "test-user")
+	project := s.addWorkshop(c, userCtx, "test-workshop", "instance-id")
+	s.backend.Workshops[project.ProjectId]["test-workshop"].VsockContextID = 42
+
+	workshopUserCtx := context.WithValue(context.Background(), workshop.ContextWorkshopUser, "test-user")
+	matchCtx := context.WithValue(workshopUserCtx, workshop.ContextVsockCID, uint32(42))
+	identity, err := s.manager.ResolveWorkshopInstanceID(matchCtx, "instance-id")
+	c.Assert(err, check.IsNil)
+	c.Assert(identity, check.NotNil)
+	c.Check(identity.User, check.Equals, "test-user")
+	c.Check(identity.Project, check.DeepEquals, project)
+	c.Check(identity.Workshop, check.Equals, "test-workshop")
+
+	wrongCIDCtx := context.WithValue(workshopUserCtx, workshop.ContextVsockCID, uint32(99))
+	identity, err = s.manager.ResolveWorkshopInstanceID(wrongCIDCtx, "instance-id")
+	c.Assert(err, check.IsNil)
+	c.Check(identity, check.IsNil)
+}
