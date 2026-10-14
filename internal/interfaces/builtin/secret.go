@@ -120,6 +120,9 @@ func (secretInterface) BeforePrepareSlot(slot *sdk.SlotInfo) error {
 	}
 
 	for key, value := range attributes {
+		if strings.TrimSpace(key) == "" {
+			return errors.New("secret slot attribute name cannot be empty")
+		}
 		if _, ok := value.(string); !ok {
 			return fmt.Errorf("attribute %q must be of type string", key)
 		}
