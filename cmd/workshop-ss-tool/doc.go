@@ -13,11 +13,11 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 // Command workshop-ss-tool retrieves one secret from the host Secret Service.
-// It reads the first JSON-encoded [system.DelegatedDBusRequest] from stdin:
+// It reads the first JSON-encoded [secretservice.DelegatedDBusRequest] from stdin:
 //
 //	{"collection":"default","attributes":{"app":"example"}}
 //
-// Stdout contains a JSON [system.DelegatedDBusResponse] with either a
+// Stdout contains a JSON [secretservice.DelegatedDBusResponse] with either a
 // base64-encoded "secret" or an "error" string. A successful empty secret is
 // encoded as {"secret":""}.
 // Recognised lookup failures use the canonical service error message:
