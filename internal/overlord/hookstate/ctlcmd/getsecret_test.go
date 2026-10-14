@@ -590,6 +590,52 @@ func (getSecretSuite) TestSecretRequestErrorPlugNotConnected(c *check.C) {
 	c.Check(code.ExitCode, check.Equals, 3)
 }
 
+// TestSecretRequestErrorPlugNotFound checks that a plug absent from its SDK
+// has a user-facing diagnostic and the system-error exit code.
+func (getSecretSuite) TestSecretRequestErrorPlugNotFound(c *check.C) {
+	testState := state.New(nil)
+	hookCtx, err := hookstate.NewContext(
+		nil,
+		testState,
+		&hookstate.HookSetup{},
+		nil,
+		"",
+	)
+	c.Assert(err, check.IsNil)
+	hookCtx.SetWorkshopIdentity(hookstate.WorkshopIdentity{
+		Project: workshop.Project{
+			Path:      "/project",
+			ProjectId: "test-project",
+		},
+		User:     "test-user",
+		Workshop: "test-workshop",
+	})
+
+	cause := fmt.Errorf("plug: %w", interfaces.ErrorPlugNotFound)
+
+	command := ctlcmd.NewGetSecretCommand(
+		hookCtx, "my-sdk.api-key", nil, nil,
+	)
+
+	command.GetSecret = func(
+		_ context.Context,
+		_ *state.State,
+		_ workshop.Project,
+		_ sdk.PlugRef,
+	) (secrets.Secret, error) {
+		return secrets.Secret{}, cause
+	}
+
+	err = command.Execute(context.Background(), nil)
+
+	c.Assert(err, check.NotNil)
+	c.Check(err.Error(), check.Equals,
+		"secret plug \"my-sdk.api-key\" is not found")
+	code, ok := errors.AsType[ctlcmd.CommandExitCodeError](err)
+	c.Check(ok, check.Equals, true)
+	c.Check(code.ExitCode, check.Equals, 255)
+}
+
 // TestSecretRequestErrorProviderLocked checks that locked stores produce
 // unlock advice and request exit code 2.
 func (getSecretSuite) TestSecretRequestErrorProviderLocked(c *check.C) {

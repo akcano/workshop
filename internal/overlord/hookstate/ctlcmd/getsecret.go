@@ -193,6 +193,12 @@ func secretRequestError(identifier string, err error) error {
 			identifier,
 			CommandExitCodeError{ExitCode: secretExitCodePlugNotConnected},
 		)
+	case errors.Is(err, interfaces.ErrorPlugNotFound):
+		return fmt.Errorf(
+			"secret plug %q is not found%w",
+			identifier,
+			CommandExitCodeError{ExitCode: secretExitCodeSystemError},
+		)
 	case errors.Is(err, secrets.ErrorMultipleSecrets):
 		return fmt.Errorf(
 			"multiple secrets match plug %q; refine the secret slot%w",

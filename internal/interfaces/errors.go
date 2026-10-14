@@ -20,6 +20,10 @@ type constError string
 // ErrorPlugNotConnected indicates that a declared plug has no connected slot.
 const ErrorPlugNotConnected = constError("plug is not connected")
 
+// ErrorPlugNotFound indicates that the requested plug is not declared by its
+// SDK.
+const ErrorPlugNotFound = constError("plug is not found")
+
 // Error returns the sentinel's diagnostic message.
 func (e constError) Error() string {
 	return string(e)
