@@ -1,4 +1,3 @@
-:hide-toc:
 .. _how_resolve_plug_conflicts:
 
 .. meta::
