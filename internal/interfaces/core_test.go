@@ -215,6 +215,12 @@ type simpleIface struct {
 func (si simpleIface) Name() string                                            { return si.name }
 func (si simpleIface) AutoConnect(plug *sdk.PlugInfo, slot *sdk.SlotInfo) bool { return false }
 
+// MaintainConnection implements [interfaces.Interface]. It keeps the
+// connection.
+func (si simpleIface) MaintainConnection(_ *sdk.PlugInfo, _ map[string]any, _ *sdk.SlotInfo, _ map[string]any) bool {
+	return true
+}
+
 func (s *CoreSuite) TestByName(c *C) {
 	// setup a mock interface using builtin - this will also trigger init() in
 	// builtin package which set ByName to a real implementation

@@ -169,6 +169,124 @@ func (s *secretSuite) TestBeforePrepareSlotRequiresNonEmptyCollection(c *check.C
 	c.Check(err, check.ErrorMatches, `secret slot collection value must contain a non empty string value`)
 }
 
+// TestMaintainConnectionUnchanged checks that a connection is kept while the
+// slot's host keyring lookup is unchanged.
+func (s *secretSuite) TestMaintainConnectionUnchanged(c *check.C) {
+	slot := secretSlot(map[string]any{
+		"attributes": map[string]any{"service": "github", "username": "tlm"},
+		"collection": "login",
+	})
+	old := map[string]any{
+		"attributes": map[string]any{"service": "github", "username": "tlm"},
+		"collection": "login",
+	}
+
+	iface := secretInterface{}
+	c.Check(iface.MaintainConnection(nil, nil, slot, old),
+		check.Equals, true)
+}
+
+// TestMaintainConnectionIgnoresPlugAttrs checks that the plug side, which
+// carries no definition attributes, does not affect the decision.
+func (s *secretSuite) TestMaintainConnectionIgnoresPlugAttrs(c *check.C) {
+	plug := &sdk.PlugInfo{Attrs: map[string]any{"unused": "value"}}
+	slot := secretSlot(map[string]any{
+		"attributes": map[string]any{"service": "github"},
+	})
+	old := map[string]any{
+		"attributes": map[string]any{"service": "github"},
+	}
+
+	iface := secretInterface{}
+	c.Check(iface.MaintainConnection(plug, nil, slot, old),
+		check.Equals, true)
+}
+
+// TestMaintainConnectionAttributeValueChanged checks that a changed keyring
+// search attribute drops the connection.
+func (s *secretSuite) TestMaintainConnectionAttributeValueChanged(c *check.C) {
+	slot := secretSlot(map[string]any{
+		"attributes": map[string]any{"service": "gitlab"},
+	})
+	old := map[string]any{
+		"attributes": map[string]any{"service": "github"},
+	}
+
+	iface := secretInterface{}
+	c.Check(iface.MaintainConnection(nil, nil, slot, old),
+		check.Equals, false)
+}
+
+// TestMaintainConnectionAttributeAdded checks that an added keyring search
+// attribute drops the connection.
+func (s *secretSuite) TestMaintainConnectionAttributeAdded(c *check.C) {
+	slot := secretSlot(map[string]any{
+		"attributes": map[string]any{"service": "github", "username": "tlm"},
+	})
+	old := map[string]any{
+		"attributes": map[string]any{"service": "github"},
+	}
+
+	iface := secretInterface{}
+	c.Check(iface.MaintainConnection(nil, nil, slot, old),
+		check.Equals, false)
+}
+
+// TestMaintainConnectionAttributeRemoved checks that a removed keyring search
+// attribute drops the connection.
+func (s *secretSuite) TestMaintainConnectionAttributeRemoved(c *check.C) {
+	slot := secretSlot(map[string]any{
+		"attributes": map[string]any{"service": "github"},
+	})
+	old := map[string]any{
+		"attributes": map[string]any{"service": "github", "username": "tlm"},
+	}
+
+	iface := secretInterface{}
+	c.Check(iface.MaintainConnection(nil, nil, slot, old),
+		check.Equals, false)
+}
+
+// TestMaintainConnectionCollectionChanged checks that a changed keyring
+// collection drops the connection.
+func (s *secretSuite) TestMaintainConnectionCollectionChanged(c *check.C) {
+	slot := secretSlot(map[string]any{
+		"attributes": map[string]any{"service": "github"},
+		"collection": "other",
+	})
+	old := map[string]any{
+		"attributes": map[string]any{"service": "github"},
+		"collection": "login",
+	}
+
+	iface := secretInterface{}
+	c.Check(iface.MaintainConnection(nil, nil, slot, old),
+		check.Equals, false)
+}
+
+// TestMaintainConnectionMissingSnapshotChanged checks that an absent recorded
+// snapshot against a populated slot counts as a change, and that the
+// comparison is safe with a nil map.
+func (s *secretSuite) TestMaintainConnectionMissingSnapshotChanged(c *check.C) {
+	slot := secretSlot(map[string]any{
+		"attributes": map[string]any{"service": "github"},
+	})
+
+	iface := secretInterface{}
+	c.Check(iface.MaintainConnection(nil, nil, slot, nil),
+		check.Equals, false)
+}
+
+// TestMaintainConnectionMissingSnapshotUnchanged checks that absent snapshots
+// on both sides compare equal, exercising the nil-map path without panicking.
+func (s *secretSuite) TestMaintainConnectionMissingSnapshotUnchanged(c *check.C) {
+	slot := secretSlot(nil)
+
+	iface := secretInterface{}
+	c.Check(iface.MaintainConnection(nil, nil, slot, nil),
+		check.Equals, true)
+}
+
 func secretSlot(attrs map[string]any) *sdk.SlotInfo {
 	return &sdk.SlotInfo{
 		Sdk:       &sdk.Info{Name: "system", Type: sdk.System},

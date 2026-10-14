@@ -73,6 +73,15 @@ func (iface *sshAgentInterface) AutoConnect(plug *sdk.PlugInfo, slot *sdk.SlotIn
 	return true
 }
 
+// MaintainConnection implements [interfaces.Interface]. It keeps the
+// connection regardless of changes to the plug or slot definition.
+func (iface *sshAgentInterface) MaintainConnection(
+	_ *sdk.PlugInfo, _ map[string]any,
+	_ *sdk.SlotInfo, _ map[string]any,
+) bool {
+	return true
+}
+
 func (iface *sshAgentInterface) MountConnectedPlug(spec *lxd_device.Specification, plug *interfaces.ConnectedPlug, slot *interfaces.ConnectedSlot) error {
 	sock := spec.Environment["SSH_AUTH_SOCK"]
 	if sock == "" {

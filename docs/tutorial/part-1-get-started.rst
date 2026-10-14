@@ -221,7 +221,7 @@ passing the base, the SDKs, and their channels on the command line:
 
    $ workshop init dev --sdks ollama/cpu/stable --base ubuntu@22.04
 
-     "dev" workshop created at /home/user/ollama-python-project/.workshop/dev.yaml
+     "dev" workshop definition created at /home/user/ollama-python-project/.workshop/dev.yaml
 
 
 Each :option:`!--sdks` entry can take the :samp:`<NAME>/<CHANNEL>` form,
@@ -320,11 +320,13 @@ to see what went into your workshop:
 
    $ workshop info
 
-     name:     dev
-     base:     ubuntu@22.04
-     project:  /home/user/ollama-python-project
-     status:   ready
-     notes:    -
+     name:      dev
+     base:      ubuntu@22.04
+     project:   ~/ollama-python-project
+     hostname:  dev.ollama-python-project.wp
+     status:    ready
+     runtime:   lxd-container
+     notes:     --
      sdks:
        system:
          installed:  (1)

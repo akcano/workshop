@@ -38,6 +38,10 @@ type TestInterface struct {
 	// AutoConnectCallback is the callback invoked inside AutoConnect
 	AutoConnectCallback func(*sdk.PlugInfo, *sdk.SlotInfo) bool
 
+	// MaintainConnectionCallback is the callback invoked inside
+	// MaintainConnection
+	MaintainConnectionCallback func(*sdk.PlugInfo, map[string]any, *sdk.SlotInfo, map[string]any) bool
+
 	// BeforePreparePlugCallback is the callback invoked inside BeforePreparePlug()
 	BeforePreparePlugCallback func(plug *sdk.PlugInfo) error
 	// BeforePrepareSlotCallback is the callback invoked inside BeforePrepareSlot()
@@ -69,6 +73,19 @@ func (t *TestInterface) Name() string {
 func (t *TestInterface) AutoConnect(plug *sdk.PlugInfo, slot *sdk.SlotInfo) bool {
 	if t.AutoConnectCallback != nil {
 		return t.AutoConnectCallback(plug, slot)
+	}
+	return true
+}
+
+// MaintainConnection implements [interfaces.Interface]. It calls
+// MaintainConnectionCallback when set, and otherwise keeps the
+// connection.
+func (t *TestInterface) MaintainConnection(
+	plug *sdk.PlugInfo, oldPlugAttrs map[string]any,
+	slot *sdk.SlotInfo, oldSlotAttrs map[string]any,
+) bool {
+	if t.MaintainConnectionCallback != nil {
+		return t.MaintainConnectionCallback(plug, oldPlugAttrs, slot, oldSlotAttrs)
 	}
 	return true
 }

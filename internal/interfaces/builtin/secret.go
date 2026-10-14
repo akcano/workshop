@@ -146,6 +146,32 @@ func init() {
 	registerIface(secretInterface{})
 }
 
+// MaintainConnection implements [interfaces.Interface]. It keeps the
+// connection while the slot's host keyring lookup is unchanged: a different
+// collection or a different set of search attributes resolves a different
+// secret. The plug carries no definition attributes.
+func (secretInterface) MaintainConnection(
+	_ *sdk.PlugInfo, _ map[string]any,
+	slot *sdk.SlotInfo, oldSlotAttrs map[string]any,
+) bool {
+	return secretSlotLookupEqual(oldSlotAttrs, slot.Attrs)
+}
+
+// secretSlotLookupEqual reports whether two secret slot attribute maps carry
+// the same host keyring lookup: the same collection and the same search
+// attributes.
+func secretSlotLookupEqual(oldAttrs, newAttrs map[string]any) bool {
+	oldCollection, _ := oldAttrs[secretSlotCollectionKey].(string)
+	newCollection, _ := newAttrs[secretSlotCollectionKey].(string)
+	if oldCollection != newCollection {
+		return false
+	}
+
+	oldAttributes, _ := oldAttrs[secretSlotAttributesKey].(map[string]any)
+	newAttributes, _ := newAttrs[secretSlotAttributesKey].(map[string]any)
+	return maps.Equal(oldAttributes, newAttributes)
+}
+
 // Name implements [interfaces.Interface], returning the unique name of
 // the secret interface.
 func (secretInterface) Name() string {
