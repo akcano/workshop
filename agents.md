@@ -19,7 +19,7 @@ See [`docs/coding-style-guide.md`](docs/coding-style-guide.md) for detailed stan
 
 ## Development Workflow
 
-See [`docs/contributing/development.rst`](../docs/contributing/development.rst) for setup, testing, and workflow details.
+See [`docs/contributing/development.rst`](docs/contributing/development.rst) for setup, testing, and workflow details.
 
 ## Related Repositories
 

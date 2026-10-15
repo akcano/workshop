@@ -55,5 +55,4 @@ snap refreshes (`$SNAP_COMMON`).
   latches true, so the later `StartUp()` call is a no-op.
 - **Where enforced**: registration ordering in `InterfaceManager.StartUp()`,
   `internal/overlord/ifacestate/ifacemgr.go`.
-- **How it breaks**: reordering registration or the syscheck - connections never
-  load and no error is surfaced.
+- **How it breaks**: if registration is reordered or the syscheck runs too early, connections never load and no error is surfaced.
