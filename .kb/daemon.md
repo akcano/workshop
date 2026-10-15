@@ -1,6 +1,6 @@
 # workshopd daemon
 
-**Scope**: Consult when working on the daemon lifecycle, state manangers
+**Scope**: Consult when working on the daemon lifecycle, state managers
 snapcraft.yaml or snap hooks or anything that reads/writes the data, common, or cache directories.
 
 Daemon lifecycle logic lives in `internal/daemon`.
