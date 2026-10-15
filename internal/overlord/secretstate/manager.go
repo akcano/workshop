@@ -158,9 +158,7 @@ func (m SecretManager) getSecret(
 	}
 
 	if plug.Interface != "secret" {
-		return secrets.Secret{}, errors.New(
-			"requested plug does not use the secret interface",
-		)
+		return secrets.Secret{}, secrets.ErrorPlugNotSecret
 	}
 
 	connections, err := m.repo.Connected(

@@ -187,15 +187,21 @@ func secretRequestError(identifier string, err error) error {
 			"secret request timed out%w",
 			CommandExitCodeError{ExitCode: secretExitCodeSystemError},
 		)
+	case errors.Is(err, interfaces.ErrorPlugNotFound):
+		return fmt.Errorf(
+			"secret plug %q is not found%w",
+			identifier,
+			CommandExitCodeError{ExitCode: secretExitCodeSystemError},
+		)
 	case errors.Is(err, interfaces.ErrorPlugNotConnected):
 		return fmt.Errorf(
 			"secret plug %q is not connected%w",
 			identifier,
 			CommandExitCodeError{ExitCode: secretExitCodePlugNotConnected},
 		)
-	case errors.Is(err, interfaces.ErrorPlugNotFound):
+	case errors.Is(err, secrets.ErrorPlugNotSecret):
 		return fmt.Errorf(
-			"secret plug %q is not found%w",
+			"plug %q does not use the secret interface%w",
 			identifier,
 			CommandExitCodeError{ExitCode: secretExitCodeSystemError},
 		)

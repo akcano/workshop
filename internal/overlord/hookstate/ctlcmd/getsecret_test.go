@@ -636,6 +636,52 @@ func (getSecretSuite) TestSecretRequestErrorPlugNotFound(c *check.C) {
 	c.Check(code.ExitCode, check.Equals, 255)
 }
 
+// TestSecretRequestErrorPlugNotSecret checks that a plug that does not use the
+// secret interface has a user-facing diagnostic and the system-error exit code.
+func (getSecretSuite) TestSecretRequestErrorPlugNotSecret(c *check.C) {
+	testState := state.New(nil)
+	hookCtx, err := hookstate.NewContext(
+		nil,
+		testState,
+		&hookstate.HookSetup{},
+		nil,
+		"",
+	)
+	c.Assert(err, check.IsNil)
+	hookCtx.SetWorkshopIdentity(hookstate.WorkshopIdentity{
+		Project: workshop.Project{
+			Path:      "/project",
+			ProjectId: "test-project",
+		},
+		User:     "test-user",
+		Workshop: "test-workshop",
+	})
+
+	cause := fmt.Errorf("plug: %w", secrets.ErrorPlugNotSecret)
+
+	command := ctlcmd.NewGetSecretCommand(
+		hookCtx, "my-sdk.api-key", nil, nil,
+	)
+
+	command.GetSecret = func(
+		_ context.Context,
+		_ *state.State,
+		_ workshop.Project,
+		_ sdk.PlugRef,
+	) (secrets.Secret, error) {
+		return secrets.Secret{}, cause
+	}
+
+	err = command.Execute(context.Background(), nil)
+
+	c.Assert(err, check.NotNil)
+	c.Check(err.Error(), check.Equals,
+		"plug \"my-sdk.api-key\" does not use the secret interface")
+	code, ok := errors.AsType[ctlcmd.CommandExitCodeError](err)
+	c.Check(ok, check.Equals, true)
+	c.Check(code.ExitCode, check.Equals, 255)
+}
+
 // TestSecretRequestErrorProviderLocked checks that locked stores produce
 // unlock advice and request exit code 2.
 func (getSecretSuite) TestSecretRequestErrorProviderLocked(c *check.C) {

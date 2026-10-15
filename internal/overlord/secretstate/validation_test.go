@@ -365,6 +365,5 @@ func (s *managerSuite) TestGetSecretWrongInterface(c *C) {
 
 	_, err = manager.getSecret(ctx, ref)
 
-	c.Check(err, ErrorMatches,
-		`requested plug does not use the secret interface`)
+	c.Check(errors.Is(err, secrets.ErrorPlugNotSecret), Equals, true)
 }
