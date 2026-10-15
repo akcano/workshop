@@ -255,15 +255,6 @@ Refreshing a virtual machine workshop does not restore connections either,
 so reconnect them after a refresh.
 
 
-SDK health checks do not run
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The health check that a container runs
-after a launch and after a refresh
-is skipped for a virtual machine,
-so :command:`workshop info` reports no SDK health notes for one.
-
-
 See also
 --------
 
