@@ -85,6 +85,20 @@ func (s *secretServiceSuite) TestDecodeExecResponseSuccess(c *check.C) {
 	c.Check(contents, check.DeepEquals, []byte{'a', 0, 0xff, '\n'})
 }
 
+// TestDecodeAndClearZeroesResponse checks that the raw response bytes, which
+// carry the base64-encoded secret, are zeroed once decoded.
+func (s *secretServiceSuite) TestDecodeAndClearZeroesResponse(c *check.C) {
+	raw := []byte(`{"secret":"YQD/Cg=="}`)
+
+	value, err := decodeAndClear(raw)
+
+	c.Assert(err, check.IsNil)
+	c.Check(value.Close(), check.IsNil)
+	for _, b := range raw {
+		c.Check(b, check.Equals, byte(0))
+	}
+}
+
 // TestGetCommandFailure excludes stdout while exposing stderr and exit status.
 func (s *secretServiceSuite) TestGetCommandFailure(c *check.C) {
 	command := &fakeExecCommand{
