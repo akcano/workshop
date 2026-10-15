@@ -15,7 +15,7 @@ Key directories: `cmd/` (CLI entry points), `client/` (Go client library), `inte
 
 ## Coding Guidelines
 
-See [`docs/coding-style-guide.md`](../docs/coding-style-guide.md) for detailed standards.
+See [`docs/coding-style-guide.md`](docs/coding-style-guide.md) for detailed standards.
 
 ## Development Workflow
 
