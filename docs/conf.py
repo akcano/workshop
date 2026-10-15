@@ -110,6 +110,7 @@ templates_path = ["_templates"]
 html_css_files = [
     "workshop.css",
     "flat-toctree.css",
+    "cookie-banner.css",
     # "category-nav.css",  # category_nav extension disabled on this branch
 ]
 
