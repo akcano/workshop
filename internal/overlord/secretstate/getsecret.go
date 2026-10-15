@@ -34,9 +34,12 @@ import (
 // Results published after cancellation are closed and removed by task undo.
 //
 // The following errors may be expected:
+//   - [secrets.ErrorMultipleSecrets]: multiple secrets match the slot.
 //   - [github.com/canonical/workshop/internal/interfaces.ErrorPlugNotConnected]:
 //     the plug has no connected slot.
-//   - [secrets.ErrorMultipleSecrets]: multiple secrets match the slot.
+//   - [github.com/canonical/workshop/internal/interfaces.ErrorPlugNotFound]:
+//     the plug is not declared by its SDK.
+//   - [secrets.ErrorPlugNotSecret]: the plug does not use the secret interface.
 //   - [secrets.ErrorProviderLocked]: the provider needs to be unlocked.
 //   - [secrets.ErrorProviderNotFound]: no provider is registered for the slot.
 //   - [secrets.ErrorSecretNotFound]: no secret matches the slot.
