@@ -1,1 +1,1 @@
-Before starting any task, read and follow [AGENTS.md](agents.md).
+Before starting any task, read and follow [agents.md](../agents.md).
