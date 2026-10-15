@@ -31,7 +31,7 @@ Triggered when `syscheck.CheckSystem()` fails (LXD missing/incompatible/down; ou
 
 - Blocks all non-`GET` requests with the degraded error; `GET` still works.
 - A recovery ticker re-runs `CheckSystem()` continuously and clears degraded
-  mode automatically — it also detects LXD disappearing _after_ startup.
+  mode automatically; it also detects LXD disappearing _after_ startup.
 
 ## Directory layout
 
