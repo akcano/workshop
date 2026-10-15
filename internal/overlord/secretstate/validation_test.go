@@ -172,7 +172,7 @@ func (s *managerSuite) TestGetSecretPlugNotDeclared(c *C) {
 
 	_, err = manager.getSecret(ctx, ref)
 
-	c.Check(err, ErrorMatches, `requested plug is not declared by sdk`)
+	c.Check(errors.Is(err, interfaces.ErrorPlugNotFound), Equals, true)
 }
 
 // TestGetSecretSDKNotInstalled checks lookup requires the requested SDK,
@@ -365,6 +365,5 @@ func (s *managerSuite) TestGetSecretWrongInterface(c *C) {
 
 	_, err = manager.getSecret(ctx, ref)
 
-	c.Check(err, ErrorMatches,
-		`requested plug does not use the secret interface`)
+	c.Check(errors.Is(err, secrets.ErrorPlugNotSecret), Equals, true)
 }

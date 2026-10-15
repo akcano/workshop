@@ -15,6 +15,7 @@
 package secretservice
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -116,6 +117,12 @@ func (s *secretServiceSuite) TestGetCommandFailure(c *check.C) {
 	c.Check(exitErr.ExitCode(), check.Equals, 7)
 	c.Check(strings.Contains(err.Error(), command.stderr), check.Equals, true)
 	c.Check(strings.Contains(err.Error(), command.stdout), check.Equals, false)
+
+	output, ok := command.cmd.Stdout.(*bytes.Buffer)
+	c.Assert(ok, check.Equals, true)
+	for _, b := range output.Bytes() {
+		c.Check(b, check.Equals, byte(0))
+	}
 }
 
 // TestGetCommandFailureWithoutStderr preserves a start failure for errors.Is.
@@ -581,6 +588,12 @@ func (s *secretServiceSuite) TestGetSuccessBinary(c *check.C) {
 	contents, err := io.ReadAll(value)
 	c.Check(err, check.IsNil)
 	c.Check(contents, check.DeepEquals, []byte{0, 255, 10, 128, 0})
+
+	output, ok := command.cmd.Stdout.(*bytes.Buffer)
+	c.Assert(ok, check.Equals, true)
+	for _, b := range output.Bytes() {
+		c.Check(b, check.Equals, byte(0))
+	}
 }
 
 // TestMakeSecretService selects a sibling executable rather than searching PATH.

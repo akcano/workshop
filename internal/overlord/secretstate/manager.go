@@ -154,13 +154,11 @@ func (m SecretManager) getSecret(
 
 	plug := m.repo.Plug(ref.ProjectId, ref.Workshop, ref.Sdk, ref.Name)
 	if plug == nil {
-		return secrets.Secret{}, errors.New("requested plug is not declared by sdk")
+		return secrets.Secret{}, interfaces.ErrorPlugNotFound
 	}
 
 	if plug.Interface != "secret" {
-		return secrets.Secret{}, errors.New(
-			"requested plug does not use the secret interface",
-		)
+		return secrets.Secret{}, secrets.ErrorPlugNotSecret
 	}
 
 	connections, err := m.repo.Connected(
