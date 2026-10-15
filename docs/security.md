@@ -198,7 +198,9 @@ user and root; ordinary workshop processes share the `workshop` user.
 While the plug is connected, any process in the workshop can make a new request.
 Workshop doesn't persist the value;
 it handles the value only transiently while fulfilling the request.
-The Secret Service session uses the `plain` algorithm, so the value isn't encrypted on that local bus.
+Workshop opens its Secret Service session with the `plain` algorithm,
+so the value crosses the user's session bus without additional encryption;
+the boundary is the host user's session, where any process of that user can already reach the keyring.
 - SSH host trust: a per-user Ed25519 certificate authority signs a host certificate for every
 workshop and a user certificate for connecting to them, so SSH clients trust any CA-signed
 host key without a manual host-key prompt.
