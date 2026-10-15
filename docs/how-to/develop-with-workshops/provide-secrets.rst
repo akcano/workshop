@@ -272,9 +272,9 @@ among the other recent changes:
      59  Done    today at 12:12 UTC  today at 12:12 UTC  Retrieve secret "<WORKSHOP>/<SDK>:<PLUG>"
 
 
-A :samp:`Done` change means that the secret was delivered
-to the process that requested it;
-:samp:`Error` means that it wasn't.
+A :samp:`Done` change means that |ws_markup| retrieved the secret
+for the process that requested it;
+:samp:`Error` means that the retrieval failed.
 The :samp:`SPAWN` column shows when the request was made.
 Neither the changes nor their tasks ever contain the value.
 
@@ -436,6 +436,7 @@ See also
 Explanation:
 
 - :ref:`exp_plugs_slots`
+- :ref:`exp_secret_interface`
 
 
 Reference:
@@ -443,6 +444,7 @@ Reference:
 - :ref:`ref_workshop_changes`
 - :ref:`ref_workshop_connect`
 - :ref:`ref_workshop_connections`
+- :ref:`ref_workshop_definition_interfaces`
 - :ref:`ref_workshop_disconnect`
 - :ref:`ref_workshop_exec`
 - :ref:`ref_workshop_run`
