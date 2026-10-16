@@ -397,20 +397,18 @@ func (d *Daemon) Init() error {
 
 	listener, err = netutil.CreateOrTakeListener(d.untrustedSocketPath, listenerMap)
 	if err == nil {
-		// This listener may also be nil if that socket wasn't among
-		// the listeners, so check it before using it.
 		d.untrustedListener = &ucrednetListener{Listener: listener}
 	} else {
-		logger.Debugf("Cannot get listener for %q: %v", d.untrustedSocketPath, err)
+		return fmt.Errorf("when trying to listen on %s: %w", d.untrustedSocketPath, err)
 	}
 
-	if d.vsockPort != 0 {
-		listener, err := netutil.CreateOrTakeVsockGuestListener(d.vsockPort, d.vsockLimitToGuests, listenerMap)
-		if err == nil {
-			d.vsockListener = listener
-		} else {
-			logger.Debugf("Cannot get vsock listener on port %d: %v", d.vsockPort, err)
-		}
+	if d.vsockPort == 0 {
+		d.setVMsUnavailable(errors.New("vsock port is not configured"))
+	} else if listener, err := netutil.CreateOrTakeVsockGuestListener(d.vsockPort, d.vsockLimitToGuests, listenerMap); err == nil {
+		d.vsockListener = listener
+	} else {
+		logger.Noticef("Cannot get vsock listener, virtual machines are unavailable: %v", err)
+		d.setVMsUnavailable(err)
 	}
 
 	d.addRoutes()
@@ -426,6 +424,13 @@ func (d *Daemon) Init() error {
 
 	logger.Noticef("Started daemon.")
 	return nil
+}
+
+func (d *Daemon) setVMsUnavailable(err error) {
+	if d.rebootIsMissing {
+		return
+	}
+	d.overlord.WorkshopManager().SetVMsUnavailable(err)
 }
 
 // SetDegradedMode puts the daemon into a degraded mode which will the
