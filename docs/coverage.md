@@ -134,6 +134,15 @@
                 <td><a href="reference/definition-files/workshop-definition.rst#L96">[workshop-definition.rst]</a></td>
                 <td>SK035</td>
             </tr><tr>
+                <td>secret interface</td>
+                <td>interface</td>
+                <td>concept</td>
+                <td></td>
+                <td><a href="how-to/develop-sdks/use-secrets.rst#L14">[use-secrets.rst]</a><br><a href="how-to/develop-with-workshops/provide-secrets.rst#L13">[provide-secrets.rst]</a></td>
+                <td><a href="explanation/interfaces/secret-interface.rst#L13">[secret-interface.rst]</a></td>
+                <td><a href="reference/definition-files/_interfaces/secret.rst#L9">[secret.rst]</a><br><a href="reference/sdks.rst#L311">[sdks.rst]</a></td>
+                <td></td>
+            </tr><tr>
                 <td>SSH interface</td>
                 <td>interface</td>
                 <td>concept</td>
@@ -907,6 +916,15 @@
                 <td><a href="explanation/architecture/components.rst#L106">[components.rst]</a><br><a href="explanation/architecture/components.rst#L43">[components.rst]</a><br><a href="explanation/cli.rst#L206">[cli.rst]</a><br><a href="explanation/sdks/runtime-hooks.rst#L188">[runtime-hooks.rst]</a></td>
                 <td><a href="reference/cli/index.rst#L19">[index.rst]</a><br><a href="reference/cli/workshopctl.rst#L11">[workshopctl.rst]</a><br><a href="reference/sdks.rst#L423">[sdks.rst]</a></td>
                 <td>SK023</td>
+            </tr><tr>
+                <td>workshopctl get-secret</td>
+                <td>workshop (container)</td>
+                <td>command</td>
+                <td></td>
+                <td><a href="how-to/develop-sdks/use-secrets.rst#L15">[use-secrets.rst]</a></td>
+                <td><a href="explanation/interfaces/secret-interface.rst#L193">[secret-interface.rst]</a></td>
+                <td></td>
+                <td></td>
             </tr><tr>
                 <td>API</td>
                 <td>workshopd</td>

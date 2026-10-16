@@ -104,8 +104,11 @@ func (s SecretService) Get(
 	}
 
 	var output, errorOutput bytes.Buffer
-	// Stderr may contain sensitive diagnostics; clear it on every return path.
+	// Both buffers may carry secret material: stdout holds the base64-encoded
+	// secret and stderr may hold diagnostics. Clear them on every return path,
+	// including command failures that return before the response is decoded.
 	defer func() {
+		clear(output.Bytes())
 		clear(errorOutput.Bytes())
 	}()
 
@@ -141,7 +144,9 @@ func (s SecretService) Get(
 	}
 
 	// Both successful lookups and recognised lookup failures exit with zero.
-	return decodeExecResponse(&output)
+	// Decode from a separate reader so output stays readable for the deferred
+	// clear that zeroes the base64-encoded secret.
+	return decodeExecResponse(bytes.NewReader(output.Bytes()))
 }
 
 // MakeSecretService creates a service using workshop-ss-tool beside the current

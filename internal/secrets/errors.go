@@ -22,6 +22,10 @@ const (
 	// request and the provider cannot safely choose one.
 	ErrorMultipleSecrets = ConstError("multiple secrets match the request")
 
+	// ErrorPlugNotSecret indicates that the requested plug does not use the
+	// secret interface.
+	ErrorPlugNotSecret = ConstError("plug does not use the secret interface")
+
 	// ErrorProviderLocked indicates that the backing secret store is locked
 	// and must be unlocked before the secret can be retrieved.
 	ErrorProviderLocked = ConstError("secret provider is locked")

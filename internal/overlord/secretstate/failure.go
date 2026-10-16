@@ -28,6 +28,8 @@ type failureCode string
 const (
 	failureMultipleSecrets  failureCode = "multiple-secrets"
 	failurePlugNotConnected failureCode = "plug-not-connected"
+	failurePlugNotFound     failureCode = "plug-not-found"
+	failurePlugNotSecret    failureCode = "plug-not-secret"
 	failureProviderLocked   failureCode = "provider-locked"
 	failureProviderNotFound failureCode = "provider-not-found"
 	failureSecretNotFound   failureCode = "secret-not-found"
@@ -44,6 +46,10 @@ func failureCodeForError(err error) (failureCode, bool) {
 		return failureMultipleSecrets, true
 	case errors.Is(err, interfaces.ErrorPlugNotConnected):
 		return failurePlugNotConnected, true
+	case errors.Is(err, interfaces.ErrorPlugNotFound):
+		return failurePlugNotFound, true
+	case errors.Is(err, secrets.ErrorPlugNotSecret):
+		return failurePlugNotSecret, true
 	case errors.Is(err, secrets.ErrorProviderLocked):
 		return failureProviderLocked, true
 	case errors.Is(err, secrets.ErrorProviderNotFound):
@@ -65,6 +71,10 @@ func failureError(code failureCode) error {
 		return secrets.ErrorMultipleSecrets
 	case failurePlugNotConnected:
 		return interfaces.ErrorPlugNotConnected
+	case failurePlugNotFound:
+		return interfaces.ErrorPlugNotFound
+	case failurePlugNotSecret:
+		return secrets.ErrorPlugNotSecret
 	case failureProviderLocked:
 		return secrets.ErrorProviderLocked
 	case failureProviderNotFound:

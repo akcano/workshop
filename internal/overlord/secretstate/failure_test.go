@@ -66,6 +66,34 @@ func (s *failureSuite) TestPlugNotConnected(c *C) {
 	c.Check(failureError(failurePlugNotConnected), Equals, want)
 }
 
+// TestPlugNotFound checks direct, wrapped and persisted undeclared-plug errors.
+func (s *failureSuite) TestPlugNotFound(c *C) {
+	want := interfaces.ErrorPlugNotFound
+	c.Check(failurePlugNotFound, Equals, failureCode("plug-not-found"))
+	code, ok := failureCodeForError(want)
+	c.Check(ok, Equals, true)
+	c.Check(code, Equals, failurePlugNotFound)
+	wrapped := fmt.Errorf("retrieving secret: %w", want)
+	code, ok = failureCodeForError(wrapped)
+	c.Check(ok, Equals, true)
+	c.Check(code, Equals, failurePlugNotFound)
+	c.Check(failureError(failurePlugNotFound), Equals, want)
+}
+
+// TestPlugNotSecret checks direct, wrapped and persisted non-secret-plug errors.
+func (s *failureSuite) TestPlugNotSecret(c *C) {
+	want := secrets.ErrorPlugNotSecret
+	c.Check(failurePlugNotSecret, Equals, failureCode("plug-not-secret"))
+	code, ok := failureCodeForError(want)
+	c.Check(ok, Equals, true)
+	c.Check(code, Equals, failurePlugNotSecret)
+	wrapped := fmt.Errorf("retrieving secret: %w", want)
+	code, ok = failureCodeForError(wrapped)
+	c.Check(ok, Equals, true)
+	c.Check(code, Equals, failurePlugNotSecret)
+	c.Check(failureError(failurePlugNotSecret), Equals, want)
+}
+
 // TestProviderLocked checks direct, wrapped and persisted locked-store errors.
 func (s *failureSuite) TestProviderLocked(c *C) {
 	want := secrets.ErrorProviderLocked

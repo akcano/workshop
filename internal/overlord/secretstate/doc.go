@@ -13,5 +13,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 // Package secretstate provides the overlord manager and task handler for
-// secret retrieval. Retrieval currently returns a placeholder value.
+// secret retrieval. A retrieval validates the consumer's connection, schedules
+// a task and resolves the secret through the connected slot's registered
+// provider.
 package secretstate

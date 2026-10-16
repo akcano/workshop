@@ -23,7 +23,7 @@ The interface splits the job between the two people involved.
 The SDK author knows that the SDK needs a credential,
 so the SDK declares a :samp:`secret` plug.
 Only the user knows where their credential is kept,
-so the workshop definition adds a :samp:`secret` slot
+so the workshop definition must add a :samp:`secret` slot
 that tells |ws_markup| how to find it in the host keyring.
 Connecting the plug to the slot lets processes in the workshop
 request the value whenever they need it.
@@ -37,7 +37,8 @@ Secret interface plug
 A :samp:`secret` plug declares that the SDK needs one credential.
 Only regular SDKs can declare it;
 the :ref:`system SDK <exp_system_sdk>` can't.
-The plug takes any valid plug name and carries no attributes,
+The plug takes any valid plug name
+and carries no attributes,
 so it describes the need, not the value or where to find it:
 
 .. code-block:: yaml
@@ -48,15 +49,12 @@ so it describes the need, not the value or where to find it:
        interface: secret
 
 
-The plug's name becomes part of how the SDK asks for the value.
+The plug's name affects how the SDK asks for the value.
 Inside the workshop,
-the secret is identified as :samp:`<SDK>.<PLUG>`,
+the secret is identified as :samp:`{SDK}.{PLUG}`,
 which is :samp:`secret-demo.api-key`
 for the plug above in an SDK named :samp:`secret-demo`.
 Both the SDK's commands and its systemd units request the value by that identifier.
-Users connect the plug by its name too,
-so renaming it in a later SDK version
-drops their connection at the next refresh.
 
 
 .. _exp_secret_slot:
@@ -65,9 +63,8 @@ Secret interface slot
 ---------------------
 
 A :samp:`secret` slot describes one item in the host keyring.
-Only the system SDK can have secret slots,
-because a slot holds the host keyring lookup details for one workshop.
-Users add them under the :samp:`system` SDK in the workshop definition:
+Only the system SDK can have secret slots;
+each slot carries the lookup details:
 
 .. code-block:: yaml
    :caption: workshop.yaml
@@ -86,10 +83,12 @@ Users add them under the :samp:`system` SDK in the workshop definition:
 The slot carries lookup details only, never the value.
 Its :samp:`attributes` are the name and value pairs
 that the keyring item was stored with;
-a lookup succeeds only when exactly one item carries all of them.
-An optional :samp:`collection` selects the keyring collection to search,
-and the collection that the keyring's :samp:`default` alias points to
-is used when the slot doesn't name one.
+a lookup succeeds only when exactly one keyring item carries all of them.
+
+An optional :samp:`collection` selects the keyring collection to search;
+the keyring's :samp:`default` collection is used if the slot doesn't name one.
+A non-default value is matched against collection labels
+and must identify exactly one collection.
 For the full grammar,
 see :ref:`ref_workshop_definition_interfaces`.
 
@@ -105,13 +104,13 @@ Connection
 ----------
 
 |ws_markup| never connects a :samp:`secret` plug on its own:
-a secret reaches a workshop only by an explicit decision of the user.
+a secret reaches a workshop only by a user's explicit decision.
 The interface policy denies auto-connection outright,
 so listing the pair in the workshop definition's :samp:`connections`
 doesn't connect it either;
 see :ref:`exp_interface_auto_connection`.
 Users connect and disconnect the plug
-with :command:`workshop connect` and :command:`workshop disconnect`:
+with :command:`workshop connect` and :command:`workshop disconnect`:
 
 .. @artefact workshop connect
 .. @artefact workshop disconnect
@@ -139,10 +138,14 @@ Connecting reads nothing from the keyring
 and puts nothing in the workshop;
 it only permits later requests.
 
-A :command:`workshop refresh` keeps the connection,
-including a refresh that changes the slot's attributes,
-so a corrected lookup takes effect without reconnecting.
-A :command:`workshop restore` drops it, like any manual connection,
+After the connection is established,
+:command:`workshop refresh` keeps it
+as long as the slot's :samp:`attributes` and :samp:`collection` stay the same.
+A refresh that changes either of them
+will disconnect the plug and report a warning,
+because the new lookup can match a different item;
+connecting the plug again approves the new lookup.
+A :command:`workshop restore` drops the connection,
 and so does a refresh that removes the plug from the SDK
 or the slot from the workshop definition;
 see :ref:`exp_workshop_connection_lifecycle`.
@@ -153,22 +156,23 @@ see :ref:`exp_workshop_connection_lifecycle`.
 How a value reaches the workshop
 --------------------------------
 
-Nothing is fetched in advance.
 |ws_markup| looks the value up in the host keyring
-each time a process in the workshop requests it,
-and hands it only to that process.
-Neither the workshop nor |ws_markup| keeps a copy.
+each time a process in the workshop requests it.
+A direct command request writes the value to standard output;
+a systemd request makes it available as a credential file
+to the unit's user and root.
+|ws_markup| doesn't persist the value;
+it handles the value only transiently while fulfilling the request.
 
 Because every request is a fresh lookup,
 the keyring stays in control:
 a value changed in the keyring takes effect on the next request,
 and a request made while the keyring is locked fails.
-|ws_markup| looks the item up through the D-Bus session bus
-of the user's desktop session,
+|ws_markup| looks the item up through the user's D-Bus session bus,
 where a keyring service implementing the freedesktop.org Secret Service,
 such as GNOME Keyring, must be running.
-It doesn't unlock the keyring or prompt for a password;
-the user unlocks it in the desktop session.
+|ws_markup| doesn't unlock the keyring or prompt for a password;
+the user unlocks it in their session.
 
 A process can request the value in two ways.
 
@@ -178,22 +182,25 @@ Command requests
 
 .. @artefact workshopctl get-secret
 
-A command runs :command:`workshopctl get-secret <SDK>.<PLUG>`,
-typically from a wrapper script that the SDK ships.
+A command runs :command:`workshopctl get-secret <SDK>.<PLUG>`,
+typically in a wrapper script that a secret-consuming SDK ships.
 :program:`workshopctl` passes the request to |ws_markup| on the host,
 which checks that the plug is connected,
 looks up the item described by the connected slot,
 and returns the value.
 :program:`workshopctl` writes it to its standard output,
-so the value goes only to the process that reads that output.
+so the value goes wherever that output goes:
+normally into the wrapper that captures it,
+but also to a terminal, a file, or a log
+if the output is sent there.
 
 When the request fails,
-:program:`workshopctl` prints a short message that names the plug and the cause,
-and its exit status tells the causes apart:
+:program:`workshopctl` prints a short message
+that names the plug and the cause:
 an unconnected plug, a locked keyring,
 no matching item or several of them,
 or another failure.
-The :ref:`workshopctl get-secret reference <ref_workshopctl__cli>`
+The :ref:`workshopctl get-secret reference <ref_workshopctl__cli>`
 lists the exit statuses.
 For a failure that |ws_markup| doesn't classify,
 the message only says :samp:`internal error`,
@@ -208,40 +215,41 @@ A long-running service receives the value as a systemd credential.
 Every workshop runs a secret socket,
 and runtime hooks get its path in :envvar:`SDK_SYSTEMD_SECRET_SOCKET`.
 A hook that installs a unit
-names the credential :samp:`<SDK>.<PLUG>`,
+names the credential :samp:`{SDK}.{PLUG}`,
 here :samp:`secret-demo.api-key`,
 and points it at that socket:
 
-.. code-block:: none
+.. code-block:: ini
 
    LoadCredential=secret-demo.api-key:${SDK_SYSTEMD_SECRET_SOCKET}
 
 
 When systemd starts the unit,
 it connects to the socket,
-and the connection itself tells which unit asks for which credential.
-A :samp:`workshop-secret@` service accepts the connection,
-requests the value of :samp:`secret-demo.api-key` the same way a command does,
+and |ws_markup| looks the value up as it does for a command
 and returns it to systemd,
 which places it in the unit's credentials directory.
-The request happens on every start of the unit, and only then.
+The request happens on every start of the unit,
+and only then.
 
-A failed request doesn't stop the unit:
-whether the plug isn't connected or the lookup fails,
-systemd starts the unit with an empty credential,
-and the cause is logged in the :samp:`workshop-secret@` journal.
-This lets a service start without the secret
-and decide for itself how to handle the missing value.
+A request that yields no value doesn't stop the unit:
+systemd starts it with an empty credential,
+and the service decides how to handle the missing value.
+This happens when the plug isn't connected,
+and when the lookup fails because the keyring is locked or no item matches;
+the :samp:`workshop-secret@` journal names the cause.
 
-Expect an empty credential on the first start after a launch or a refresh.
-|ws_markup| runs each SDK's :samp:`setup-base` hook
-before the plug is connected:
-at launch, the user hasn't connected it yet,
-and at refresh, |ws_markup| restores the connection only after the hook.
-A service that the hook starts therefore gets an empty credential on that first start.
-Give its unit a restart policy,
+Expect an empty credential at launch,
+where a service can start before the user has connected the plug,
+and during a refresh,
+where services and :samp:`setup-base` hooks run
+before |ws_markup| restores preserved connections.
+Give the unit a restart policy,
 or restart it once the plug is connected;
 :ref:`how_use_secrets` shows both.
+If a refresh leaves the plug disconnected,
+connect it again,
+then restart the service.
 
 
 Request records
@@ -252,8 +260,9 @@ whether from a command or a service,
 creates a :samp:`Retrieve secret` change
 named after the workshop, SDK, and plug,
 such as :samp:`Retrieve secret "dev/secret-demo:api-key"`.
-A :samp:`Done` change means that the value was delivered;
-an :samp:`Error` change means that it wasn't,
+A :samp:`Done` change means that |ws_markup| retrieved the value;
+it doesn't confirm that the requesting process received it.
+An :samp:`Error` change means that the retrieval failed,
 and its task log names the cause.
 Neither the change nor its tasks contain the value.
 
@@ -268,13 +277,22 @@ See :ref:`how_provide_secrets_check` for how to read them.
 What a connection exposes
 -------------------------
 
-A connection grants access to the workshop,
+A connection exposes the secret to the entire workshop,
 not to one SDK or one process.
 While the plug is connected,
-any process in the workshop can request the value
-by naming the plug's :samp:`<SDK>.<PLUG>`,
+any process in the workshop,
 including commands that don't belong to the SDK
-and units installed by other SDKs.
+and units installed by other SDKs,
+can request the value
+by naming the plug's :samp:`{SDK}.{PLUG}`.
+
+A systemd credential is a file under :file:`/run/credentials/<UNIT>`
+in the workshop's filesystem,
+readable by the unit's user and root for as long as the unit runs.
+Because ordinary workshop commands and services share the
+:samp:`workshop` user,
+other processes running as that user can read the credential file
+of such a service while it runs.
 
 Once a process receives the value,
 |ws_markup| has no further control over it.
@@ -284,10 +302,9 @@ or write it somewhere;
 how far the value travels depends on how the SDK hands it on,
 as compared in :ref:`how_use_secrets`.
 
-Disconnect the plug when you don't need the secret,
-especially before an autonomous coding agent starts working in the workshop.
-Disconnecting stops new requests,
-but it can't withdraw a value that a process has already received.
+Disconnecting the plug stops new requests,
+but it can't withdraw a value
+that a process has already received.
 
 
 See also

@@ -134,6 +134,18 @@ func (s *secretSuite) TestBeforePrepareSlotRequiresAtLeastOneAttribute(c *check.
 	c.Check(err, check.ErrorMatches, `at least one attribute must be defined for a secret slot`)
 }
 
+// TestBeforePrepareSlotRequiresNamedAttributes checks that a keyring search
+// attribute is named, so a malformed slot is rejected when the SDK is loaded
+// rather than failing later during retrieval.
+func (s *secretSuite) TestBeforePrepareSlotRequiresNamedAttributes(c *check.C) {
+	slot := secretSlot(map[string]any{
+		"attributes": map[string]any{" ": "github"},
+	})
+
+	err := (secretInterface{}).BeforePrepareSlot(slot)
+	c.Check(err, check.ErrorMatches, `secret slot attribute name cannot be empty`)
+}
+
 // TestBeforePrepareSlotRequiresStringAttributeValues checks that every keyring
 // search attribute has the string representation required by the provider.
 func (s *secretSuite) TestBeforePrepareSlotRequiresStringAttributeValues(c *check.C) {

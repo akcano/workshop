@@ -192,8 +192,15 @@ User‑exposed crypto and providers
 allowing tools inside the container to authenticate without copying private keys.
 - Secret interface: reads a credential from the host keyring through the freedesktop.org Secret Service
 on the user's D-Bus session bus each time a process in the workshop requests it,
-and returns it only to that process; Workshop keeps no copy.
-The Secret Service session uses the `plain` algorithm, so the value isn't encrypted on that local bus.
+and, for a direct request, writes the value to the requesting command's standard output.
+For a systemd request, the value is a credential file readable by the unit's
+user and root; ordinary workshop processes share the `workshop` user.
+While the plug is connected, any process in the workshop can make a new request.
+Workshop doesn't persist the value;
+it handles the value only transiently while fulfilling the request.
+Workshop opens its Secret Service session with the `plain` algorithm,
+so the value crosses the user's session bus without additional encryption;
+the boundary is the host user's session, where any process of that user can already reach the keyring.
 - SSH host trust: a per-user Ed25519 certificate authority signs a host certificate for every
 workshop and a user certificate for connecting to them, so SSH clients trust any CA-signed
 host key without a manual host-key prompt.

@@ -315,14 +315,14 @@ A secret plug in the definition must specify the plug name and the interface:
 .. code-block:: yaml
    :caption: sdk.yaml
 
-    # ...
-    plugs:
-      <NAME>:
-        interface: secret
+   # ...
+   plugs:
+     <NAME>:
+       interface: secret
 
 
 This lets processes in the workshop request a credential from the host keyring
-as :samp:`<SDK>.<NAME>`
+as :samp:`{SDK}.{NAME}`
 after the user connects the plug to a secret slot of the :samp:`system` SDK.
 The slot is defined in the workshop definition;
 see :ref:`ref_workshop_definition_interfaces`.
@@ -536,7 +536,7 @@ The options :samp:`errexit` and :samp:`pipefail`
 are set by default,
 so most commands which return a nonzero exit code
 cause the hook to exit with the same code.
-If :option:`!--verbose` is passed to :command:`workshop launch` or :command:`workshop refresh`,
+If :option:`!--verbose` is passed to :command:`workshop launch` or :command:`workshop refresh`,
 the option :samp:`xtrace` is also set.
 
 .. note::
