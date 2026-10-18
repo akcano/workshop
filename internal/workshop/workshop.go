@@ -46,6 +46,7 @@ var InstallTimeNow = time.Now
 
 type Workshop struct {
 	Backend Backend
+	User    string
 	Project Project
 	// InstanceID uniquely identifies the running backend instance. It is used
 	// to associate requests originating inside the workshop with this record.
@@ -95,13 +96,8 @@ func (w *Workshop) metaFromVolume(ctx context.Context, setup sdk.Setup) (string,
 	return vinfo.SdkYAML, nil
 }
 
-func (w *Workshop) metaFromFile(ctx context.Context, setup sdk.Setup) (string, error) {
-	username, ok := ctx.Value(ContextUser).(string)
-	if !ok {
-		return "", fmt.Errorf("context key %s not found", ContextUser)
-	}
-
-	usr, env, err := osutil.UserAndEnv(username)
+func (w *Workshop) metaFromFile(setup sdk.Setup) (string, error) {
+	usr, env, err := osutil.UserAndEnv(w.User)
 	if err != nil {
 		return "", err
 	}
@@ -145,7 +141,7 @@ func (w *Workshop) SdkInfo(ctx context.Context, sdkName string) (*sdk.Info, erro
 	if sk.IsVolume() {
 		meta, err = w.metaFromVolume(ctx, sk.Setup)
 	} else {
-		meta, err = w.metaFromFile(ctx, sk.Setup)
+		meta, err = w.metaFromFile(sk.Setup)
 	}
 
 	if err != nil {

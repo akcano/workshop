@@ -54,6 +54,9 @@ func (s *managerSuite) addWorkshop(
 	project, _, err := s.backend.CreateOrLoadProject(ctx, c.MkDir())
 	c.Assert(err, check.IsNil)
 
+	username, ok := ctx.Value(workshop.ContextUser).(string)
+	c.Assert(ok, check.Equals, true)
+
 	if s.backend.Workshops[project.ProjectId] == nil {
 		s.backend.Workshops[project.ProjectId] = make(
 			map[string]*fakebackend.FakeWorkshop,
@@ -62,6 +65,7 @@ func (s *managerSuite) addWorkshop(
 	s.backend.Workshops[project.ProjectId][name] = &fakebackend.FakeWorkshop{
 		Workshop: &workshop.Workshop{
 			Name:       name,
+			User:       username,
 			Project:    *project,
 			InstanceID: instanceID,
 		},

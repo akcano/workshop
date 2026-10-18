@@ -197,7 +197,7 @@ func workshopFileToInfo(pid string, name string, path string) *WorkshopFileInfo 
 
 // Returns essential workshop properties and its SDKs health statuses (if
 // available).
-func workshopToInfo(username string, w *workshop.Workshop, health healthstate.HealthState) (*WorkshopInfo, error) {
+func workshopToInfo(w *workshop.Workshop, health healthstate.HealthState) (*WorkshopInfo, error) {
 	var info WorkshopInfo
 	info.Name = w.Name
 	info.ProjectId = w.Project.ProjectId
@@ -211,7 +211,7 @@ func workshopToInfo(username string, w *workshop.Workshop, health healthstate.He
 
 	sdkSetups := w.SdksByInstallOrder()
 
-	usr, env, err := osutil.UserAndEnv(username)
+	usr, env, err := osutil.UserAndEnv(w.User)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +256,7 @@ func workshopToInfo(username string, w *workshop.Workshop, health healthstate.He
 // information about the installed SDKs. This function reads from the workshop's
 // filesystem to obtain certain fields, it has to be used with possible latency
 // changes in mind.
-func workshopToInfoFull(ctx context.Context, username string, w *workshop.Workshop, health healthstate.HealthState) (*WorkshopInfo, error) {
+func workshopToInfoFull(ctx context.Context, w *workshop.Workshop, health healthstate.HealthState) (*WorkshopInfo, error) {
 	var info WorkshopInfo
 	info.Name = w.Name
 	info.ProjectId = w.Project.ProjectId
@@ -276,7 +276,7 @@ func workshopToInfoFull(ctx context.Context, username string, w *workshop.Worksh
 	mnts := w.Mounts(sdks)
 	tunnels := w.Tunnels(sdks)
 
-	usr, env, err := osutil.UserAndEnv(username)
+	usr, env, err := osutil.UserAndEnv(w.User)
 	if err != nil {
 		return nil, err
 	}
@@ -442,17 +442,12 @@ func v1GetProjectWorkshops(c *Command, r *http.Request, _ *userState) Response {
 		return statusInternalError("%w", err)
 	}
 
-	username, ok := r.Context().Value(workshop.ContextUser).(string)
-	if !ok {
-		return statusBadRequest("internal error: user is not known")
-	}
-
 	info := Workshops{}
 	info.Workshops = make([]*WorkshopInfo, 0, len(workshops))
 	for _, w := range workshops {
 		health := healthstate.WorkshopHealth(state, w)
 		if ignoreStatus || health.Status == status {
-			wi, err := workshopToInfo(username, w, health)
+			wi, err := workshopToInfo(w, health)
 			if err != nil {
 				return statusBadRequest("%w", err)
 			}
@@ -730,12 +725,7 @@ func v1GetProjectWorkshop(c *Command, r *http.Request, _ *userState) Response {
 
 	ctx := context.WithValue(r.Context(), workshop.ContextProjectId, projectId)
 
-	username, ok := ctx.Value(workshop.ContextUser).(string)
-	if !ok {
-		return statusBadRequest("internal error: user is not known")
-	}
-
-	info, err := workshopToInfoFull(ctx, username, w, health)
+	info, err := workshopToInfoFull(ctx, w, health)
 	if err != nil {
 		return statusBadRequest("%w", err)
 	}

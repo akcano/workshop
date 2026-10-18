@@ -19,6 +19,7 @@ SdkRecord:
   Slots:
 Workshop:
   Backend:
+  User: string
   Project: workshop.Project
   InstanceID: string
   File: '*workshop.File'

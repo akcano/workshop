@@ -1096,7 +1096,7 @@ func (s *Backend) Workshop(ctx context.Context, name string) (*workshop.Workshop
 		cnames = []cname{}
 	}
 
-	workshop, err := s.loadWorkshop(conn, inst, p, cnames)
+	workshop, err := s.loadWorkshop(conn, inst, user, p, cnames)
 	if err != nil {
 		return nil, err
 	}
@@ -1114,7 +1114,7 @@ func workshopFile(lxdConfig map[string]string) (*workshop.File, error) {
 	return &f, nil
 }
 
-func (b *Backend) loadWorkshop(conn lxd.InstanceServer, inst *api.Instance, p workshop.Project, cnames []cname) (*workshop.Workshop, error) {
+func (b *Backend) loadWorkshop(conn lxd.InstanceServer, inst *api.Instance, user string, p workshop.Project, cnames []cname) (*workshop.Workshop, error) {
 	f, err := workshopFile(inst.Config)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load workshop: %v", err)
@@ -1160,6 +1160,7 @@ func (b *Backend) loadWorkshop(conn lxd.InstanceServer, inst *api.Instance, p wo
 
 	return &workshop.Workshop{
 		Backend:    b,
+		User:       user,
 		Project:    p,
 		InstanceID: instanceIDFromLXDUUID(inst.Config[instanceUUIDConfigKey]),
 		Name:       f.Name,
@@ -1241,7 +1242,7 @@ func (s *Backend) ProjectWorkshops(ctx context.Context) ([]*workshop.Workshop, e
 
 	var workshops []*workshop.Workshop
 	for _, i := range instances {
-		ws, err := s.loadWorkshop(conn, &i, p, nil)
+		ws, err := s.loadWorkshop(conn, &i, user, p, nil)
 		if err != nil {
 			logger.Debugf("Workshop Backend on ProjectsWorkshops: %v", err)
 			continue

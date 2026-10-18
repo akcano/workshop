@@ -272,6 +272,7 @@ func (s *managerSuite) TestGetSecretScopedSuccess(c *C) {
 		c.Check(name, Equals, ref.Workshop)
 		return &workshop.Workshop{
 			Name: ref.Workshop,
+			User: "real-user",
 			Project: workshop.Project{
 				Path: c.MkDir(), ProjectId: ref.ProjectId,
 			},

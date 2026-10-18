@@ -34,6 +34,7 @@ func (s *apiSuite) addWorkshopWithInstanceID(instanceID string) {
 		"test-workshop": {
 			Workshop: &workshop.Workshop{
 				Name:       "test-workshop",
+				User:       s.user.Username,
 				Project:    s.project,
 				InstanceID: instanceID,
 			},
