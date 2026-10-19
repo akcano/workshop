@@ -273,6 +273,23 @@ func (s *healthSuite) TestWorkshopHealthOperationInProgress(c *check.C) {
 	})
 }
 
+func (s *healthSuite) TestWorkshopHealthIgnoresGetSecret(c *check.C) {
+	s.state.Lock()
+	defer s.state.Unlock()
+
+	chg := s.state.NewChange("get-secret", "test")
+	chg.Set("project-id", s.project.ProjectId)
+	task := s.state.NewTask("get-secret", "test task")
+	task.Set("workshop", "ws")
+	chg.AddTask(task)
+
+	workshop := s.launchWorkshopWithSDKs(c, nil, nil)
+	health := healthstate.WorkshopHealth(s.state, workshop)
+
+	c.Assert(health.Status, check.Equals, healthstate.ReadyStatus)
+	c.Check(health.Cause.ChangeRef, check.IsNil)
+}
+
 func (s *healthSuite) TestWorkshopHealthOperationWaitingWithNotes(c *check.C) {
 	s.state.Lock()
 	defer s.state.Unlock()
