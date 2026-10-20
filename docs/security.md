@@ -173,21 +173,24 @@ concerns in [GitHub issues](https://github.com/canonical/workshop/issues).
 
 ## Cryptography
 
-Transport encryption
+### Transport encryption
+
 - CLI ↔ daemon: local Unix domain socket (no TLS required).
 - Outbound traffic: HTTPS/TLS for simplestreams [image downloads](https://cloud-images.ubuntu.com/releases/)
 and public LXD remotes via the Go TLS stack (through the LXD client).
 - Mutual TLS (public LXD remotes): enable by supplying X.509 materials 
 in `/var/lib/workshop/tls` (`server.crt`, `client.crt`, `client.key`, `client.ca`).
 
-Internal cryptography
+### Internal cryptography
+
 - TLS stack: Go's `crypto/tls` and `crypto/x509` (via the Canonical LXD Go client), 
 using TLS 1.2/1.3 with Go's secure default cipher suites (ECDHE with AES‑GCM/ChaCha20‑Poly1305) 
 and the system trust store by default.
 - Randomness: `crypto/rand` for non‑guessable identifiers (e.g., 4‑byte project IDs, 8‑byte layer suffixes);
 these values are not used for access control.
 
-User‑exposed crypto and providers
+### User‑exposed crypto and providers
+
 - SSH agent interface: forwards the host's `ssh-agent` into the workshop via an LXD proxy device, 
 allowing tools inside the container to authenticate without copying private keys.
 - Secret interface: reads a credential from the host keyring through the freedesktop.org Secret Service
