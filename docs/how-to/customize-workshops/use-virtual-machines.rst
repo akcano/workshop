@@ -46,7 +46,7 @@ Prerequisites
 Before starting, ensure you have these requirements satisfied:
 
 - A |ws_markup| installation that supports the :samp:`runtime` key.
-- LXD from the :samp:`6/edge` channel,
+- LXD from the :samp:`6/candidate` channel,
   on a host with hardware virtualization available.
 - A workshop you have not launched yet.
   The runtime is fixed when a workshop is launched,
@@ -63,19 +63,19 @@ Check that |ws_markup| lists the runtimes it supports:
      ...
 
 
-Switch LXD to the :samp:`6/edge` channel:
+Switch LXD to the :samp:`6/candidate` channel:
 
 .. code-block:: console
 
-   $ sudo snap refresh --channel=6/edge lxd
+   $ sudo snap refresh --channel=6/candidate lxd
 
 
 .. warning::
 
-   The :samp:`edge` channel carries LXD builds that haven't been released yet,
+   The :samp:`candidate` channel carries LXD builds that haven't been released yet,
    so it is experimental as well.
    The switch applies to the whole host, including your container workshops,
-   and LXD doesn't support moving back from :samp:`6/edge` to :samp:`6/stable`.
+   and LXD doesn't support moving back from :samp:`6/candidate` to :samp:`6/stable`.
 
 
 Opt in to virtual machines
@@ -242,7 +242,7 @@ a virtual machine workshop that declares an SDK is refused:
      error: cannot refresh "<NAME>": cannot refresh "<NAME>": SDKs are currently unavailable for virtual machines
 
 
-Switch LXD to :samp:`6/edge` as the prerequisites require.
+Switch LXD to :samp:`6/candidate` as the prerequisites require.
 
 
 Most interfaces are unsupported
