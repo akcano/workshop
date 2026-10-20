@@ -94,6 +94,8 @@ var (
 	WorkshopdLocksDir string
 	// SSH keys
 	WorkshopSSHDir string
+	// OpenSSH client config fragments, included from /etc/ssh/ssh_config.d
+	WorkshopSSHConfigDir string
 	// Certificates
 	WorkshopTlsDir string
 )
@@ -168,6 +170,7 @@ func setCommonDir(commonDir string) {
 	CommonDir = commonDir
 
 	WorkshopSSHDir = filepath.Join(CommonDir, "ssh")
+	WorkshopSSHConfigDir = filepath.Join(WorkshopSSHDir, "ssh_config.d")
 	WorkshopTlsDir = filepath.Join(CommonDir, "tls")
 
 	// Runtime data (X cookies, SDK locks) is used as an LXD mount source, so it
@@ -209,6 +212,9 @@ func CreateDirs() error {
 		return err
 	}
 	if err := os.MkdirAll(WorkshopSSHDir, 0755); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(WorkshopSSHConfigDir, 0755); err != nil {
 		return err
 	}
 	if err := os.MkdirAll(WorkshopTlsDir, 0755); err != nil {

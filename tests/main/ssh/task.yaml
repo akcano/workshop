@@ -49,7 +49,7 @@ execute: |
 
   echo "Check confined snaps cannot read the workshop SSH config"
   literal=/var/snap/test-ssh-client/common/literal.conf
-  echo "Include /var/snap/workshop/common/workshop/ssh/config" > "$literal"
+  echo "Include /var/snap/workshop/common/workshop/ssh/ssh_config.d/workshop.conf" > "$literal"
   confined_ssh -F "$literal" -G example.invalid 2>&1 | MATCH 'Permission denied'
 
   echo "Check confined snaps can still parse the system SSH config"
