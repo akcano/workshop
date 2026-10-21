@@ -41,7 +41,7 @@ jobs:
         uses: canonical/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79 # v1.3.0
         id: snapcraft_workshop_arm64
       - name: Upload Workshop (arm64)
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: snap_workshop_arm64
           path: ${{ steps.snapcraft_workshop_arm64.outputs.snap }}
@@ -192,12 +192,12 @@ jobs:
           go-version: "1.26"
           cache: false
       - name: Download Workshop Snap
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: snap_workshop
           path: ${{ github.workspace }}/tests/
       - name: Download spread binary
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: spread_binary
           path: /usr/local/bin
@@ -232,7 +232,7 @@ jobs:
           rm -f "$ARTIFACT"
           zip -r "$ARTIFACT" "${entries[@]}"
       - name: Upload Coverage
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           path: code-coverage-${{ matrix.suite.name }}.zip
           archive: false
@@ -243,7 +243,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download snap artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: snap_workshop
       - uses: canonical/action-publish@214b86e5ca036ead1668c79afb81e550e6c54d40 # v1.2.0
@@ -261,7 +261,7 @@ jobs:
           snap: ${{ needs.build-deps.outputs.snap_workshop }}
           release: edge/${{ github.event.pull_request.number }}
       - name: Download arm64 snap artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: snap_workshop_arm64
       - uses: canonical/action-publish@214b86e5ca036ead1668c79afb81e550e6c54d40 # v1.2.0
