@@ -370,3 +370,25 @@ plugs:
 	c.Check(plug.Attrs["vendorid"], check.Equals, "ef01")
 	c.Check(plug.Attrs["productid"], check.Equals, "abcd")
 }
+
+func (s *customDeviceSuite) TestCustomDeviceInterfaceRequiresContainer(c *check.C) {
+	yaml := `name: consumer
+base: ubuntu@22.04
+plugs:
+  mydevice:
+    interface: custom-device
+    subsystem: accel
+slots:
+  mydevice:
+    interface: custom-device
+`
+	info, warning := checkCompatible(c, yaml, s.projectId, "ws", workshop.RuntimeLXDContainer)
+	c.Check(info.Plugs["mydevice"], check.NotNil)
+	c.Check(info.Slots["mydevice"], check.NotNil)
+	c.Check(warning, check.IsNil)
+
+	info, warning = checkCompatible(c, yaml, s.projectId, "ws", workshop.RuntimeLXDVM)
+	c.Check(info.Plugs["mydevice"], check.IsNil)
+	c.Check(info.Slots["mydevice"], check.IsNil)
+	c.Check(warning, check.ErrorMatches, `"consumer" SDK has incompatible plugs: mydevice \(custom-device interface only available to containers\); and slots: mydevice \(custom-device interface only available to containers\)`)
+}

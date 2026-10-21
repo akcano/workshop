@@ -34,6 +34,7 @@ func (s *apiSuite) addWorkshopWithInstanceID(instanceID string) {
 		"test-workshop": {
 			Workshop: &workshop.Workshop{
 				Name:       "test-workshop",
+				User:       s.user.Username,
 				Project:    s.project,
 				InstanceID: instanceID,
 			},
@@ -108,15 +109,11 @@ func (s *apiSuite) TestWorkshopHelpCtlWithoutCookie(c *check.C) {
 	wctl := apiCmd("/v1/workshopctl")
 
 	buf := bytes.NewBufferString(`{"args":["-h"]}`)
+	ctx := context.WithValue(context.Background(), workshop.ContextWorkshopInstanceID, "instance-id")
+	ctx = context.WithValue(ctx, workshop.ContextWorkshopUser, s.user.Username)
 
-	req, err := s.createProjectsRequest("POST", "/v1/workshopctl", buf)
+	req, err := http.NewRequestWithContext(ctx, "POST", "/v1/workshopctl", buf)
 	c.Assert(err, check.IsNil)
-
-	req = req.WithContext(context.WithValue(
-		req.Context(),
-		workshop.ContextWorkshopInstanceID,
-		"instance-id",
-	))
 
 	// Execute
 	rsp := v1PostWorkshopCtl(wctl, req, nil).(*resp)
@@ -135,7 +132,8 @@ func (s *apiSuite) TestWorkshopCtlRequiresInstanceIDWithoutCookie(c *check.C) {
 	s.daemon(c)
 	wctl := apiCmd("/v1/workshopctl")
 	buf := bytes.NewBufferString(`{"args":["get-secret","sdk.secret"]}`)
-	req, err := s.createProjectsRequest("POST", "/v1/workshopctl", buf)
+	ctx := context.WithValue(context.Background(), workshop.ContextWorkshopUser, s.user.Username)
+	req, err := http.NewRequestWithContext(ctx, "POST", "/v1/workshopctl", buf)
 	c.Assert(err, check.IsNil)
 
 	rsp := v1PostWorkshopCtl(wctl, req, nil).(*resp)
@@ -147,15 +145,29 @@ func (s *apiSuite) TestWorkshopCtlRequiresInstanceIDWithoutCookie(c *check.C) {
 // cookie cannot use an instance ID outside the requesting user's workshops.
 func (s *apiSuite) TestWorkshopCtlRejectsUnknownInstanceID(c *check.C) {
 	s.daemon(c)
+	s.addWorkshopWithInstanceID("instance-id")
 	wctl := apiCmd("/v1/workshopctl")
 	buf := bytes.NewBufferString(`{"args":["get-secret","sdk.secret"]}`)
-	req, err := s.createProjectsRequest("POST", "/v1/workshopctl", buf)
+	ctx := context.WithValue(context.Background(), workshop.ContextWorkshopInstanceID, "unknown-instance")
+	ctx = context.WithValue(ctx, workshop.ContextWorkshopUser, "other-user")
+	req, err := http.NewRequestWithContext(ctx, "POST", "/v1/workshopctl", buf)
 	c.Assert(err, check.IsNil)
-	req = req.WithContext(context.WithValue(
-		req.Context(),
-		workshop.ContextWorkshopInstanceID,
-		"unknown-instance",
-	))
+
+	rsp := v1PostWorkshopCtl(wctl, req, nil).(*resp)
+
+	c.Check(rsp.Status, check.Equals, http.StatusForbidden)
+}
+
+// TestWorkshopCtlRejectsUnknownPeer checks that a request without a username
+// cannot lookup workshops by instance ID.
+func (s *apiSuite) TestWorkshopCtlRejectsUnknownPeer(c *check.C) {
+	s.daemon(c)
+	s.addWorkshopWithInstanceID("instance-id")
+	wctl := apiCmd("/v1/workshopctl")
+	buf := bytes.NewBufferString(`{"args":["get-secret","sdk.secret"]}`)
+	ctx := context.WithValue(context.Background(), workshop.ContextWorkshopInstanceID, "instance-id")
+	req, err := http.NewRequestWithContext(ctx, "POST", "/v1/workshopctl", buf)
+	c.Assert(err, check.IsNil)
 
 	rsp := v1PostWorkshopCtl(wctl, req, nil).(*resp)
 
@@ -179,13 +191,10 @@ func (s *apiSuite) TestWorkshopCtlAcceptsOwnedInstanceID(c *check.C) {
 	buf := bytes.NewBufferString(
 		`{"args":["get-secret","sdk.secret"],"stdin":"dGVzdA=="}`,
 	)
-	req, err := s.createProjectsRequest("POST", "/v1/workshopctl", buf)
+	ctx := context.WithValue(context.Background(), workshop.ContextWorkshopInstanceID, "instance-id")
+	ctx = context.WithValue(ctx, workshop.ContextWorkshopUser, s.user.Username)
+	req, err := http.NewRequestWithContext(ctx, "POST", "/v1/workshopctl", buf)
 	c.Assert(err, check.IsNil)
-	req = req.WithContext(context.WithValue(
-		req.Context(),
-		workshop.ContextWorkshopInstanceID,
-		"instance-id",
-	))
 
 	rsp := v1PostWorkshopCtl(wctl, req, nil).(*resp)
 
@@ -200,18 +209,15 @@ func (s *apiSuite) TestWorkshopCtlAcceptsOwnedInstanceID(c *check.C) {
 }
 
 // TestWorkshopCtlPreservesInstanceIdentity checks the ephemeral context carries
-// the project, workshop and authenticated user resolved from the instance ID.
+// the project, workshop and user resolved from the instance ID.
 func (s *apiSuite) TestWorkshopCtlPreservesInstanceIdentity(c *check.C) {
 	s.daemon(c)
 	s.addWorkshopWithInstanceID("instance-id")
 	wctl := apiCmd("/v1/workshopctl")
-	req, err := s.createProjectsRequest("POST", "/v1/workshopctl", nil)
+	ctx := context.WithValue(context.Background(), workshop.ContextWorkshopInstanceID, "instance-id")
+	ctx = context.WithValue(ctx, workshop.ContextWorkshopUser, s.user.Username)
+	req, err := http.NewRequestWithContext(ctx, "POST", "/v1/workshopctl", nil)
 	c.Assert(err, check.IsNil)
-	req = req.WithContext(context.WithValue(
-		req.Context(),
-		workshop.ContextWorkshopInstanceID,
-		"instance-id",
-	))
 
 	hookContext, response := workshopctlHookContext(wctl, req, "")
 
@@ -221,8 +227,7 @@ func (s *apiSuite) TestWorkshopCtlPreservesInstanceIdentity(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Check(identity.Project, check.DeepEquals, s.project)
 	c.Check(identity.Workshop, check.Equals, "test-workshop")
-	c.Check(identity.User, check.Equals,
-		req.Context().Value(workshop.ContextUser))
+	c.Check(identity.User, check.Equals, s.user.Username)
 }
 
 // TestWorkshopCtlRejectsUnknownCookie checks that an invalid cookie produces
@@ -234,13 +239,10 @@ func (s *apiSuite) TestWorkshopCtlRejectsUnknownCookie(c *check.C) {
 	buf := bytes.NewBufferString(
 		`{"context-id":"unknown-cookie","args":["get-secret","sdk.secret"]}`,
 	)
-	req, err := s.createProjectsRequest("POST", "/v1/workshopctl", buf)
+	ctx := context.WithValue(context.Background(), workshop.ContextWorkshopInstanceID, "instance-id")
+	ctx = context.WithValue(ctx, workshop.ContextWorkshopUser, s.user.Username)
+	req, err := http.NewRequestWithContext(ctx, "POST", "/v1/workshopctl", buf)
 	c.Assert(err, check.IsNil)
-	req = req.WithContext(context.WithValue(
-		req.Context(),
-		workshop.ContextWorkshopInstanceID,
-		"instance-id",
-	))
 
 	rsp := v1PostWorkshopCtl(wctl, req, nil).(*resp)
 

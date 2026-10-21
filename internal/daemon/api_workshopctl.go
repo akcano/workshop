@@ -59,11 +59,6 @@ func v1PostWorkshopCtl(c *Command, r *http.Request, _ *userState) Response {
 		return statusBadRequest("cannot decode data from request body: %w", err)
 	}
 
-	_, uid, _, err := ucrednetGet(r.RemoteAddr)
-	if err != nil {
-		return statusForbidden("cannot get remote user: %w", err)
-	}
-
 	hookContext, response := workshopctlHookContext(c, r, reqData.ContextID)
 	if response != nil {
 		return response
@@ -75,7 +70,7 @@ func v1PostWorkshopCtl(c *Command, r *http.Request, _ *userState) Response {
 		hookContext.Unlock()
 	}
 
-	stdout, stderr, err := ctlcmd.Run(r.Context(), hookContext, reqData.Args, uid)
+	stdout, stderr, err := ctlcmd.Run(r.Context(), hookContext, reqData.Args)
 	if fe, is := errors.AsType[*flags.Error](err); is && fe.Type == flags.ErrHelp {
 		stdout = []byte(fe.Error())
 	} else if err != nil {
@@ -157,7 +152,7 @@ func workshopctlHookContextFromInstanceID(
 	identity, err := c.d.overlord.WorkshopManager().
 		ResolveWorkshopInstanceID(r.Context(), instanceID)
 	if err != nil {
-		logger.Noticef("cannot validate workshop instance ID: %v", err)
+		logger.Noticef("Cannot validate workshop instance ID: %v", err)
 		return nil, statusInternalError("internal error occurred validating workshop instance id")
 	}
 	if identity == nil {
@@ -166,13 +161,12 @@ func workshopctlHookContextFromInstanceID(
 
 	hookContext, err := c.d.overlord.HookManager().NewEphemeralContext()
 	if err != nil {
-		logger.Noticef("cannot create workshop context: %v", err)
+		logger.Noticef("Cannot create workshop context: %v", err)
 		return nil, statusInternalError("internal error occurred")
 	}
-	username, _ := r.Context().Value(workshop.ContextUser).(string)
 	hookContext.SetWorkshopIdentity(hookstate.WorkshopIdentity{
+		User:     identity.User,
 		Project:  identity.Project,
-		User:     username,
 		Workshop: identity.Workshop,
 	})
 	return hookContext, nil

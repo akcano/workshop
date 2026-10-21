@@ -144,6 +144,7 @@ opencode
 OpenVINO
 passthrough
 pathname
+PCIe
 PlugRef
 PRs
 prebuilt
@@ -237,6 +238,7 @@ url
 uv
 validator
 venv
+vsock
 wayland
 Wayland
 WAYLAND

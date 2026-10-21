@@ -302,6 +302,7 @@ func (f *FakeWorkshopBackend) resetWorkshop(ctx context.Context, file *workshop.
 		ws.Workshop = &workshop.Workshop{Backend: f,
 			Name:     file.Name,
 			Running:  false,
+			User:     user,
 			Project:  *prj,
 			Format:   f.FormatRevision(),
 			Image:    snapshot.Image,

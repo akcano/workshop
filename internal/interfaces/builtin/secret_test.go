@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package builtin
+package builtin_test
 
 import (
 	"slices"
@@ -20,22 +20,30 @@ import (
 	"gopkg.in/check.v1"
 
 	"github.com/canonical/workshop/internal/interfaces"
+	"github.com/canonical/workshop/internal/interfaces/builtin"
 	"github.com/canonical/workshop/internal/sdk"
+	"github.com/canonical/workshop/internal/workshop"
 )
 
 // secretSuite tests the behaviour of the built-in secret interface.
-// Each test constructs its own interface value rather than sharing
-// suite state, keeping the tests independent of each other.
-type secretSuite struct{}
+type secretSuite struct {
+	iface     interfaces.Interface
+	projectId string
+}
 
-var _ = check.Suite(&secretSuite{})
+var _ = check.Suite(&secretSuite{
+	iface: builtin.MustInterface("secret"),
+})
+
+func (s *secretSuite) SetUpSuite(c *check.C) {
+	s.projectId = "42424242"
+}
 
 // TestAutoConnectDefersToPolicy checks that the secret interface's
 // AutoConnect does not override policy: the denial of auto-connection
 // for secrets is enforced solely by the interface's base declaration.
 func (s *secretSuite) TestAutoConnectDefersToPolicy(c *check.C) {
-	iface := secretInterface{}
-	c.Check(iface.AutoConnect(nil, nil), check.Equals, true)
+	c.Check(s.iface.AutoConnect(nil, nil), check.Equals, true)
 }
 
 // TestInterfaces checks that the secret interface is registered as a
@@ -44,7 +52,7 @@ func (s *secretSuite) TestAutoConnectDefersToPolicy(c *check.C) {
 // enough for the secret interface to be available by name.
 func (s *secretSuite) TestInterfaces(c *check.C) {
 	registered := slices.ContainsFunc(
-		Interfaces(), func(i interfaces.Interface) bool {
+		builtin.Interfaces(), func(i interfaces.Interface) bool {
 			return i.Name() == "secret"
 		})
 	c.Check(
@@ -55,8 +63,7 @@ func (s *secretSuite) TestInterfaces(c *check.C) {
 
 // TestName checks that the interface name is correct.
 func (s *secretSuite) TestName(c *check.C) {
-	iface := secretInterface{}
-	c.Check(iface.Name(), check.Equals, "secret")
+	c.Check(s.iface.Name(), check.Equals, "secret")
 }
 
 // TestBeforePrepareSlotDefaultsCollection checks that a valid secret slot
@@ -70,7 +77,7 @@ func (s *secretSuite) TestBeforePrepareSlotDefaultsCollection(c *check.C) {
 		},
 	})
 
-	err := (secretInterface{}).BeforePrepareSlot(slot)
+	err := interfaces.BeforePrepareSlot(s.iface, slot)
 	c.Assert(err, check.IsNil)
 	c.Check(slot.Attrs["collection"], check.Equals, "default")
 }
@@ -83,7 +90,7 @@ func (s *secretSuite) TestBeforePrepareSlotKeepsCollection(c *check.C) {
 		"attributes": map[string]any{"service": "ollama"},
 	})
 
-	err := (secretInterface{}).BeforePrepareSlot(slot)
+	err := interfaces.BeforePrepareSlot(s.iface, slot)
 	c.Assert(err, check.IsNil)
 	c.Check(slot.Attrs["collection"], check.Equals, "non-default-test")
 }
@@ -94,7 +101,7 @@ func (s *secretSuite) TestBeforePrepareSlotRejectsUnsupportedProvider(c *check.C
 	slot := secretSlot(nil)
 	slot.Sdk = &sdk.Info{Name: "producer", Type: sdk.Regular}
 
-	err := (secretInterface{}).BeforePrepareSlot(slot)
+	err := interfaces.BeforePrepareSlot(s.iface, slot)
 	c.Check(err, check.ErrorMatches, `secret interface slots are only supported by the system SDK`)
 }
 
@@ -103,7 +110,7 @@ func (s *secretSuite) TestBeforePrepareSlotRejectsUnsupportedProvider(c *check.C
 func (s *secretSuite) TestBeforePrepareSlotRejectsUnsupportedKeys(c *check.C) {
 	slot := secretSlot(map[string]any{"unknown": "value"})
 
-	err := (secretInterface{}).BeforePrepareSlot(slot)
+	err := interfaces.BeforePrepareSlot(s.iface, slot)
 	c.Check(err, check.ErrorMatches, `unsupported keys found in secret slot`)
 }
 
@@ -112,7 +119,7 @@ func (s *secretSuite) TestBeforePrepareSlotRejectsUnsupportedKeys(c *check.C) {
 func (s *secretSuite) TestBeforePrepareSlotRequiresAttributes(c *check.C) {
 	slot := secretSlot(nil)
 
-	err := (secretInterface{}).BeforePrepareSlot(slot)
+	err := interfaces.BeforePrepareSlot(s.iface, slot)
 	c.Check(err, check.ErrorMatches, `secret interface slot must contain "attributes"`)
 }
 
@@ -121,7 +128,7 @@ func (s *secretSuite) TestBeforePrepareSlotRequiresAttributes(c *check.C) {
 func (s *secretSuite) TestBeforePrepareSlotRequiresAttributesMap(c *check.C) {
 	slot := secretSlot(map[string]any{"attributes": "service=github"})
 
-	err := (secretInterface{}).BeforePrepareSlot(slot)
+	err := interfaces.BeforePrepareSlot(s.iface, slot)
 	c.Check(err, check.ErrorMatches, `secret interface slot "attributes" must be a map`)
 }
 
@@ -130,7 +137,7 @@ func (s *secretSuite) TestBeforePrepareSlotRequiresAttributesMap(c *check.C) {
 func (s *secretSuite) TestBeforePrepareSlotRequiresAtLeastOneAttribute(c *check.C) {
 	slot := secretSlot(map[string]any{"attributes": map[string]any{}})
 
-	err := (secretInterface{}).BeforePrepareSlot(slot)
+	err := interfaces.BeforePrepareSlot(s.iface, slot)
 	c.Check(err, check.ErrorMatches, `at least one attribute must be defined for a secret slot`)
 }
 
@@ -142,7 +149,7 @@ func (s *secretSuite) TestBeforePrepareSlotRequiresNamedAttributes(c *check.C) {
 		"attributes": map[string]any{" ": "github"},
 	})
 
-	err := (secretInterface{}).BeforePrepareSlot(slot)
+	err := interfaces.BeforePrepareSlot(s.iface, slot)
 	c.Check(err, check.ErrorMatches, `secret slot attribute name cannot be empty`)
 }
 
@@ -153,7 +160,7 @@ func (s *secretSuite) TestBeforePrepareSlotRequiresStringAttributeValues(c *chec
 		"attributes": map[string]any{"service": int64(42)},
 	})
 
-	err := (secretInterface{}).BeforePrepareSlot(slot)
+	err := interfaces.BeforePrepareSlot(s.iface, slot)
 	c.Check(err, check.ErrorMatches, `attribute "service" must be of type string`)
 }
 
@@ -165,7 +172,7 @@ func (s *secretSuite) TestBeforePrepareSlotRequiresStringCollection(c *check.C) 
 		"attributes": map[string]any{"service": "github"},
 	})
 
-	err := (secretInterface{}).BeforePrepareSlot(slot)
+	err := interfaces.BeforePrepareSlot(s.iface, slot)
 	c.Check(err, check.ErrorMatches, `secret slot collection key must have a string value`)
 }
 
@@ -177,7 +184,7 @@ func (s *secretSuite) TestBeforePrepareSlotRequiresNonEmptyCollection(c *check.C
 		"attributes": map[string]any{"service": "github"},
 	})
 
-	err := (secretInterface{}).BeforePrepareSlot(slot)
+	err := interfaces.BeforePrepareSlot(s.iface, slot)
 	c.Check(err, check.ErrorMatches, `secret slot collection value must contain a non empty string value`)
 }
 
@@ -193,8 +200,7 @@ func (s *secretSuite) TestMaintainConnectionUnchanged(c *check.C) {
 		"collection": "login",
 	}
 
-	iface := secretInterface{}
-	c.Check(iface.MaintainConnection(nil, nil, slot, old),
+	c.Check(s.iface.MaintainConnection(nil, nil, slot, old),
 		check.Equals, true)
 }
 
@@ -209,8 +215,7 @@ func (s *secretSuite) TestMaintainConnectionIgnoresPlugAttrs(c *check.C) {
 		"attributes": map[string]any{"service": "github"},
 	}
 
-	iface := secretInterface{}
-	c.Check(iface.MaintainConnection(plug, nil, slot, old),
+	c.Check(s.iface.MaintainConnection(plug, nil, slot, old),
 		check.Equals, true)
 }
 
@@ -224,8 +229,7 @@ func (s *secretSuite) TestMaintainConnectionAttributeValueChanged(c *check.C) {
 		"attributes": map[string]any{"service": "github"},
 	}
 
-	iface := secretInterface{}
-	c.Check(iface.MaintainConnection(nil, nil, slot, old),
+	c.Check(s.iface.MaintainConnection(nil, nil, slot, old),
 		check.Equals, false)
 }
 
@@ -239,8 +243,7 @@ func (s *secretSuite) TestMaintainConnectionAttributeAdded(c *check.C) {
 		"attributes": map[string]any{"service": "github"},
 	}
 
-	iface := secretInterface{}
-	c.Check(iface.MaintainConnection(nil, nil, slot, old),
+	c.Check(s.iface.MaintainConnection(nil, nil, slot, old),
 		check.Equals, false)
 }
 
@@ -254,8 +257,7 @@ func (s *secretSuite) TestMaintainConnectionAttributeRemoved(c *check.C) {
 		"attributes": map[string]any{"service": "github", "username": "tlm"},
 	}
 
-	iface := secretInterface{}
-	c.Check(iface.MaintainConnection(nil, nil, slot, old),
+	c.Check(s.iface.MaintainConnection(nil, nil, slot, old),
 		check.Equals, false)
 }
 
@@ -271,8 +273,7 @@ func (s *secretSuite) TestMaintainConnectionCollectionChanged(c *check.C) {
 		"collection": "login",
 	}
 
-	iface := secretInterface{}
-	c.Check(iface.MaintainConnection(nil, nil, slot, old),
+	c.Check(s.iface.MaintainConnection(nil, nil, slot, old),
 		check.Equals, false)
 }
 
@@ -284,8 +285,7 @@ func (s *secretSuite) TestMaintainConnectionMissingSnapshotChanged(c *check.C) {
 		"attributes": map[string]any{"service": "github"},
 	})
 
-	iface := secretInterface{}
-	c.Check(iface.MaintainConnection(nil, nil, slot, nil),
+	c.Check(s.iface.MaintainConnection(nil, nil, slot, nil),
 		check.Equals, false)
 }
 
@@ -294,8 +294,7 @@ func (s *secretSuite) TestMaintainConnectionMissingSnapshotChanged(c *check.C) {
 func (s *secretSuite) TestMaintainConnectionMissingSnapshotUnchanged(c *check.C) {
 	slot := secretSlot(nil)
 
-	iface := secretInterface{}
-	c.Check(iface.MaintainConnection(nil, nil, slot, nil),
+	c.Check(s.iface.MaintainConnection(nil, nil, slot, nil),
 		check.Equals, true)
 }
 
@@ -305,5 +304,36 @@ func secretSlot(attrs map[string]any) *sdk.SlotInfo {
 		Name:      "secret",
 		Interface: "secret",
 		Attrs:     attrs,
+	}
+}
+
+func (s *secretSuite) TestSecretPlugSupportsAllRuntimes(c *check.C) {
+	yaml := `name: consumer
+base: ubuntu@22.04
+plugs:
+ secret:
+  interface: secret
+`
+	for _, runtime := range []workshop.Runtime{workshop.RuntimeLXDContainer, workshop.RuntimeLXDVM} {
+		info, warning := checkCompatible(c, yaml, s.projectId, "ws", runtime)
+		c.Check(info.Plugs["secret"], check.NotNil)
+		c.Check(warning, check.IsNil)
+	}
+}
+
+func (s *secretSuite) TestSecretSlotSupportsAllRuntimes(c *check.C) {
+	yaml := `name: system
+type: system
+base: ubuntu@22.04
+slots:
+ secret:
+  interface: secret
+  attributes:
+   service: github
+`
+	for _, runtime := range []workshop.Runtime{workshop.RuntimeLXDContainer, workshop.RuntimeLXDVM} {
+		info, warning := checkCompatible(c, yaml, s.projectId, "ws", runtime)
+		c.Check(info.Slots["secret"], check.NotNil)
+		c.Check(warning, check.IsNil)
 	}
 }

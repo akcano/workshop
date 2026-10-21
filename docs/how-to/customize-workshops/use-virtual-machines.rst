@@ -46,7 +46,7 @@ Prerequisites
 Before starting, ensure you have these requirements satisfied:
 
 - A |ws_markup| installation that supports the :samp:`runtime` key.
-- LXD from the :samp:`6/edge` channel,
+- LXD from the :samp:`6/candidate` channel,
   on a host with hardware virtualization available.
 - A workshop you have not launched yet.
   The runtime is fixed when a workshop is launched,
@@ -63,19 +63,19 @@ Check that |ws_markup| lists the runtimes it supports:
      ...
 
 
-Switch LXD to the :samp:`6/edge` channel:
+Switch LXD to the :samp:`6/candidate` channel:
 
 .. code-block:: console
 
-   $ sudo snap refresh --channel=6/edge lxd
+   $ sudo snap refresh --channel=6/candidate lxd
 
 
 .. warning::
 
-   The :samp:`edge` channel carries LXD builds that haven't been released yet,
+   The :samp:`candidate` channel carries LXD builds that haven't been released yet,
    so it is experimental as well.
    The switch applies to the whole host, including your container workshops,
-   and LXD doesn't support moving back from :samp:`6/edge` to :samp:`6/stable`.
+   and LXD doesn't support moving back from :samp:`6/candidate` to :samp:`6/stable`.
 
 
 Opt in to virtual machines
@@ -242,26 +242,51 @@ a virtual machine workshop that declares an SDK is refused:
      error: cannot refresh "<NAME>": cannot refresh "<NAME>": SDKs are currently unavailable for virtual machines
 
 
-Switch LXD to :samp:`6/edge` as the prerequisites require.
+Switch LXD to :samp:`6/candidate` as the prerequisites require.
 
 
-SDK interfaces are not connected automatically
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Most interfaces are unsupported
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Launching a container connects the SDK plugs that qualify for it;
-launching a virtual machine skips that step.
-Connect the plugs you need with :command:`workshop connect`.
-Refreshing a virtual machine workshop does not restore connections either,
-so reconnect them after a refresh.
+Currently, virtual machine workshops only support the :samp:`mount` and :samp:`secret` interfaces.
+Other interfaces will not be auto-connected and cannot be connected manually.
+
+Virtual machine workshops can still install SDKs
+that contain unsupported plugs and slots,
+but these plugs and slots will not be listed in :command:`workshop connections`.
 
 
-SDK health checks do not run
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Removing stopped workshops
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The health check that a container runs
-after a launch and after a refresh
-is skipped for a virtual machine,
-so :command:`workshop info` reports no SDK health notes for one.
+Disconnecting a :samp:`mount` interface plug
+requires the workshop to be running.
+This can prevent removing a stopped workshop.
+Either start the workshop before removing it,
+or see :ref:`how_purge`.
+A future |ws_markup| release will remove this limitation.
+
+
+Virtual hardware is restrictive
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Virtual machines are modeled on physical hardware,
+and have some of the same limitations.
+When the workshop starts,
+the following quantities are set in stone:
+
+- The number of processors.
+- Total system memory.
+- The root filesystem size.
+
+Interfaces can be connected and disconnected while the workshop is running,
+but much like devices plugged into a physical machine,
+there's a limit to the total number of interface connections.
+
+The simplest way to avoid these limits is to disconnect unused interfaces.
+In some cases, |ws_markup| uses the number of SDKs to predict hardware requirements;
+adding an SDK without many plugs or slots
+can help to compensate for one with several active connections.
 
 
 See also
@@ -291,3 +316,4 @@ Reference:
 - :ref:`ref_workshop_remove`
 - :ref:`ref_workshop_start`
 - :ref:`ref_workshop_stop`
+- :ref:`ref_workshop_interfaces_in_vms`

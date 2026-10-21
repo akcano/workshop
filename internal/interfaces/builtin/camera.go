@@ -20,6 +20,8 @@
 package builtin
 
 import (
+	"errors"
+
 	"github.com/canonical/workshop/internal/interfaces"
 	"github.com/canonical/workshop/internal/interfaces/lxd_device"
 	"github.com/canonical/workshop/internal/sdk"
@@ -77,6 +79,20 @@ func (iface *cameraInterface) MaintainConnection(
 	_ *sdk.SlotInfo, _ map[string]any,
 ) bool {
 	return true
+}
+
+func (iface *cameraInterface) CheckCompatiblePlug(plug *sdk.PlugInfo, runtime workshop.Runtime) error {
+	if runtime != workshop.RuntimeLXDContainer {
+		return errors.New("camera interface only available to containers")
+	}
+	return nil
+}
+
+func (iface *cameraInterface) CheckCompatibleSlot(slot *sdk.SlotInfo, runtime workshop.Runtime) error {
+	if runtime != workshop.RuntimeLXDContainer {
+		return errors.New("camera interface only available to containers")
+	}
+	return nil
 }
 
 func (iface *cameraInterface) MountConnectedPlug(spec *lxd_device.Specification, plug *interfaces.ConnectedPlug, slot *interfaces.ConnectedSlot) error {

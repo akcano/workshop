@@ -261,6 +261,20 @@ func endpointsEqual(oldAttrs, newAttrs map[string]any) bool {
 	return oldEndpoint == newEndpoint
 }
 
+func (iface *tunnelInterface) CheckCompatiblePlug(plug *sdk.PlugInfo, runtime workshop.Runtime) error {
+	if runtime != workshop.RuntimeLXDContainer {
+		return errors.New("tunnel interface only available to containers")
+	}
+	return nil
+}
+
+func (iface *tunnelInterface) CheckCompatibleSlot(slot *sdk.SlotInfo, runtime workshop.Runtime) error {
+	if runtime != workshop.RuntimeLXDContainer {
+		return errors.New("tunnel interface only available to containers")
+	}
+	return nil
+}
+
 func (iface *tunnelInterface) MountConnectedPlug(spec *lxd_device.Specification, plug *interfaces.ConnectedPlug, slot *interfaces.ConnectedSlot) error {
 	entry := workshop.ProxyEntry{Name: plug.Name()}
 
